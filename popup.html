@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Form Extractor Pro</title>
+  <style>
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      width: 650px; 
+      padding: 15px; 
+      font-size: 14px;
+      color: #333;
+      background-color: #f9f9f9;
+    }
+    #controls, #outputContainer, #actions, #dataContainer { 
+      margin-bottom: 15px; 
+      padding: 12px;
+      border-radius: 4px;
+      background-color: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    h3 {
+      margin-top: 0;
+      color: #2c3e50;
+      font-weight: 600;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+    }
+    label { 
+      display: block; 
+      margin-bottom: 5px; 
+      font-weight: 600;
+      color: #444;
+    }
+    input[type="text"] { 
+      width: calc(100% - 16px); 
+      padding: 8px; 
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: inherit;
+    }
+    textarea {
+      width: 100%;
+      min-height: 150px; /* Default per dataInput */
+      max-height: 400px;
+      box-sizing: border-box;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre;
+      overflow-wrap: break-word;
+      resize: vertical;
+    }
+    #previewFrame {
+      width: 100%;
+      height: 300px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background-color: white;
+    }
+    #htmlSourceTextarea { /* Stile specifico per la textarea del codice HTML */
+        min-height: 300px; /* Uguale a previewFrame */
+        max-height: 500px;
+    }
+    .btn {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      margin-right: 8px;
+      transition: background-color 0.2s;
+      display: inline-flex;
+      align-items: center;
+    }
+    .btn:hover {
+      background-color: #2980b9;
+    }
+    .btn-primary { background-color: #3498db; }
+    .btn-success { background-color: #2ecc71; }
+    .btn-secondary { background-color: #95a5a6; }
+    .btn-warning { background-color: #f39c12; }
+    .btn:disabled {
+      background-color: #bdc3c7;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    #statusMessage { 
+      margin-top: 10px; 
+      font-style: italic; 
+      color: #555; 
+      min-height: 1em;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    .status-info { background-color: #e8f4fd; border-left: 4px solid #3498db; color: #333; }
+    .status-success { background-color: #e8fcf1; border-left: 4px solid #2ecc71; color: #333; }
+    .status-error { background-color: #fdebeb; border-left: 4px solid #e74c3c; color: #c0392b; font-weight: 500; }
+    .btn-icon { margin-right: 5px; }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .file-input-wrapper { /* Mantenuto per il bottone di caricamento JSON */
+      position: relative;
+      overflow: hidden;
+      display: inline-block; /* Per far funzionare il trucco dell'input file nascosto */
+    }
+    .file-input-wrapper input[type=file] {
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .hidden { display: none !important; }
+    .view-toggle-label { margin-right: 10px; font-weight: normal; }
+    .view-toggle-controls { margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+  <div id="controls">
+    <h3>Estrazione Form</h3>
+    <button id="extractFormsButton" class="btn btn-primary">
+      <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+      </svg>
+      Estrai Forms
+    </button>
+    <br><br>
+    <label for="pageNameInput">Nome Pagina (per salvataggio HTML):</label>
+    <input type="text" id="pageNameInput" placeholder="Es: pagina_login_mio_sito">
+  </div>
+
+  <div id="outputContainer">
+    <div class="section-header">
+      <h3>Output Form Estratto</h3>
+      <div class="view-toggle-controls">
+        <label class="view-toggle-label"><input type="radio" name="viewMode" value="preview" checked> Anteprima</label>
+        <label class="view-toggle-label"><input type="radio" name="viewMode" value="source"> Codice Sorgente</label>
+      </div>
+    </div>
+    <iframe id="previewFrame" sandbox="allow-forms allow-same-origin"></iframe>
+    <textarea id="htmlSourceTextarea" class="hidden" placeholder="Il codice HTML estratto apparirà qui..."></textarea>
+  </div>
+
+  <div id="actions">
+    <h3>Azioni sull'HTML Estratto</h3>
+    <button id="copyButton" disabled class="btn btn-primary">
+      <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+      Copia HTML
+    </button>
+    <button id="saveButton" disabled class="btn btn-success">
+      <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+        <polyline points="7 3 7 8 15 8"></polyline>
+      </svg>
+      Salva come HTML
+    </button>
+    <button id="applySourceChangesButton" class="btn btn-secondary hidden">
+        <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        Applica Modifiche al Codice
+    </button>
+  </div>
+
+  <div id="dataContainer">
+    <div class="section-header">
+      <h3>Dati per Compilazione (JSON)</h3>
+      <div class="file-input-wrapper">
+        <button id="loadDataButton" class="btn btn-warning">
+          <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path> <!-- Icona graffetta (upload/attach) -->
+          </svg>
+          Carica file .json
+        </button>
+        <input type="file" id="dataFileInput" accept=".json">
+      </div>
+    </div>
+    <textarea id="dataInput" placeholder='Incolla qui i dati JSON o carica da file. Formato:
+[
+  { "id": "id_campo1", "valore": "valore_da_inserire" },
+  { "id": "id_checkbox", "valore": "OK" },
+  { "id": "id_campo2", "valore": "altro_valore" }
+]'></textarea>
+    <br><br>
+    <button id="assignValuesButton" class="btn btn-success">
+      <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      Assegna Valori al Form
+    </button>
+  </div>
+
+  <div id="statusMessage"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

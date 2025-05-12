@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "HTML Form Helper",
+  "version": "2.0",
+  "description": "Estrae form HTML, li ripulisce e aiuta nella compilazione con dati JSON.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "downloads" 
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["purify.min.js", "content.js"] 
+    }
+  ]
+}
