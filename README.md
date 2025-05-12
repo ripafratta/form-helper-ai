@@ -28,7 +28,7 @@ Per installare l'estensione in Chrome (o browser compatibili come Brave, Edge):
 ## Utilizzo
 
 1.  Naviga alla pagina web che contiene il form che desideri estrarre o compilare.
-2.  Clicca sull'icona dell'estensione "Form Extractor Pro" nella barra degli strumenti di Chrome. Si aprirà il popup.
+2.  Clicca sull'icona dell'estensione "Form Helper" nella barra degli strumenti di Chrome. Si aprirà il popup.
 3.  **Estrazione Form:** Clicca sul pulsante **"Estrai Forms"**. L'estensione analizzerà la pagina, estrarrà e semplificherà i form e mostrerà il risultato nell'area di output. Il campo "Nome Pagina" verrà pre-compilato con il titolo della pagina.
 4.  **Visualizzazione HTML:** Utilizza i radio button "Anteprima" e "Codice Sorgente" per alternare la visualizzazione.
     *   **Anteprima:** Mostra come appare il form estratto con gli stili di base.
