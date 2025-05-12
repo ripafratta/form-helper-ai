@@ -53,7 +53,7 @@ Per installare l'estensione in Chrome (o browser compatibili come Brave, Edge):
     *   Inserisci la tua chiave API **corrispondente al provider del modello scelto** nel campo "Chiave API". (Es. usa una chiave Google Cloud per i modelli Gemini, una chiave OpenAI per i modelli GPT).
     *   Clicca su "Salva Configurazione AI". La configurazione verrà salvata per usi futuri. **Nota:** Le chiavi API sono necessarie per usare le funzionalità AI e potrebbero comportare costi con il provider scelto in base al modello e all'utilizzo.
 9.  **(Opzionale) Mapping con AI:**
-    *   Assicurati di aver estratto un form (passo 3) e di aver caricato o incollato i dati JSON nell'area "Dati per Compilazione (JSON Input)" (passo 6).
+    *   Assicurati di aver estratto un form (passo 3) e di aver caricato o incollato i dati JSON nell'area "Dati JSOM" (passo 6).
     *   Assicurati che la Configurazione AI sia valida (passo 8).
     *   Clicca sul pulsante **"Mappa Dati con AI"**. L'estensione invierà l'HTML e il JSON all'LLM configurato.
     *   Attendi il completamento. Il risultato (un nuovo JSON con i mapping `id`-`valore` suggeriti) apparirà nell'area "Mapping Dati Suggerito dall'AI".
