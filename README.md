@@ -74,10 +74,10 @@ L'estrazione si basa principalmente sui tag <form>. Form dinamici complessi o cr
 La semplificazione HTML è euristica e potrebbe non funzionare perfettamente su tutti i siti web con strutture molto complesse o non standard.
 L'assegnazione valori funziona principalmente tramite ID. Campi senza ID potrebbero non essere compilabili con questa funzione.
 
+## Licenza
+Questo progetto è rilasciato sotto la licenza MIT. 
+
 ## Crediti
 Utilizza DOMPurify per la sanitizzazione (sebbene la logica di estrazione corrente si concentri più sulla semplificazione strutturale che sulla sanitizzazione del HTML grezzo dell'intera pagina).
+
 Questo codice è stato realizzato con il supporto di Google AI Studio: link alla chat: https://aistudio.google.com/prompts/10V2LuSonl2oIcrxz-iBnHa6SNxnRqXNH 
-
-
-## Licenza
-MIT
