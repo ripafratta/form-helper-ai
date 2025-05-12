@@ -1,0 +1,477 @@
+[
+  {
+    "sezione": "1.1 Dati Domanda - Marca da Bollo",
+    "campi": [
+      {
+        "id": "",
+        "descrizione": "Numero Marca da bollo (del valore di € 16)",
+        "valore": "1234567890"
+      },
+      {
+        "id": "",
+        "descrizione": "Data della Marca da Bollo",
+        "valore": "2025-05-12"
+      }
+    ]
+  },
+  {
+    "sezione": "1.2 Dati Domanda - Rappr. Legale",
+    "campi": [
+      {
+        "id": "",
+        "descrizione": "Codice Fiscale",
+        "valore": "BRTMRK68F10E463E"
+      },
+      {
+        "id": "",
+        "descrizione": "Nome",
+        "valore": "Mirko"
+      },
+      {
+        "id": "",
+        "descrizione": "Cognome",
+        "valore": "Bertolini"
+      },
+      {
+        "id": "",
+        "descrizione": "No",
+        "valore": "on"
+      },
+      {
+        "id": "",
+        "descrizione": "Luogo di Nascita",
+        "valore": "Pappiana"
+      },
+      {
+        "id": "",
+        "descrizione": "Comune di Nascita",
+        "valore": "San Giuliano"
+      },
+      {
+        "id": "",
+        "descrizione": "Data di nascita",
+        "valore": "1968-02-10"
+      },
+      {
+        "id": "",
+        "descrizione": "No",
+        "valore": "on"
+      },
+      {
+        "id": "",
+        "descrizione": "Indirizzo residenza",
+        "valore": "via Nenni 12"
+      },
+      {
+        "id": "",
+        "descrizione": "Città di residenza",
+        "valore": "Pisa"
+      },
+      {
+        "id": "",
+        "descrizione": "Indirizzo residenza",
+        "valore": "via Nenni 12"
+      },
+      {
+        "id": "",
+        "descrizione": "CAP Residenza",
+        "valore": "56124"
+      },
+      {
+        "id": "",
+        "descrizione": "Comune Residenza",
+        "valore": "Pisa"
+      },
+      {
+        "id": "",
+        "descrizione": "Provincia Residenza",
+        "valore": "PI"
+      }
+    ]
+  },
+  {
+    "sezione": "1.3 Dati Domanda - Dati del Soggetto",
+    "campi": [
+      {
+        "id": "",
+        "descrizione": "Tipologia soggetto richiedente *",
+        "valore": "Impresa"
+      },
+      {
+        "id": "",
+        "descrizione": "Impresa",
+        "valore": "on"
+      },
+      {
+        "id": "",
+        "descrizione": "Forma Giuridica",
+        "valore": "SRL"
+      },
+      {
+        "id": "",
+        "descrizione": "Codice Fiscale *",
+        "valore": "123212321232"
+      },
+      {
+        "id": "",
+        "descrizione": "Partita IVA",
+        "valore": "123212321232"
+      },
+      {
+        "id": "",
+        "descrizione": "Ragione Sociale *",
+        "valore": "Zermatt Tuffi Srl"
+      },
+      {
+        "id": "",
+        "descrizione": "Micro",
+        "valore": "on"
+      }
+    ]
+  },
+  {
+    "sezione": "1.4 Dati Domanda - Coord Bancarie_Postali",
+    "campi": [
+      {
+        "id": "",
+        "descrizione": "Intestatario Conto corrente / Postale",
+        "valore": "Leonella Mazzitelli"
+      },
+      {
+        "id": "",
+        "descrizione": "Conto Bancario",
+        "valore": "on"
+      },
+      {
+        "id": "",
+        "descrizione": "IBAN",
+        "valore": "IT12V11123112212"
+      },
+      {
+        "id": "",
+        "descrizione": "Istituto bancario beneficiario",
+        "valore": "Banca dell'Agricoltura"
+      }
+    ]
+  },
+  {
+    "sezione": "2.1 Dichiarazioni - Dichiarazioni",
+    "campi": [
+      {
+        "id": "",
+        "descrizione": "Si",
+        "valore": "on"
+      }
+    ]
+  },
+  {
+    "sezione": "2.2 Dichiarazioni - Dimensione Impresa",
+    "campi": [
+      {
+        "id": "",
+        "descrizione": "Impresa autonoma",
+        "valore": "Selezionato"
+      },
+      {
+        "id": "",
+        "descrizione": "No",
+        "valore": "on"
+      }
+    ]
+  },
+  {
+    "sezione": "2.3 Dichiarazioni - Intestazione Fiduciaria",
+    "campi": [
+      {
+        "id": "",
+        "descrizione": "L’esistenza di intestazioni fiduciarie dirette comunque assunte, di azioni o quote delle società",
+        "valore": "on"
+      }
+    ]
+  },
+  {
+    "sezione": "2.4 Dichiarazioni - Antiriciclaggio",
+    "campi": [
+      {
+        "id": "",
+        "descrizione": "Conteggio titolari effettivi inseriti",
+        "valore": "2"
+      },
+      {
+        "id": "",
+        "descrizione": "Di essere titolare effettivo della società unitamente a",
+        "valore": "on"
+      },
+      {
+        "id": "",
+        "descrizione": "Nome",
+        "valore": "Veronica"
+      },
+      {
+        "id": "",
+        "descrizione": "Cognome",
+        "valore": "Mazzitelli"
+      },
+      {
+        "id": "",
+        "descrizione": "Nato A",
+        "valore": "Cesano d'Adda"
+      },
+      {
+        "id": "",
+        "descrizione": "Provincia di",
+        "valore": "Como"
+      },
+      {
+        "id": "",
+        "descrizione": "Data di nascita",
+        "valore": "2025-05-02"
+      },
+      {
+        "id": "",
+        "descrizione": "Cittadinanza",
+        "valore": "Rumena"
+      },
+      {
+        "id": "",
+        "descrizione": "Residente a",
+        "valore": "Cambiago"
+      },
+      {
+        "id": "",
+        "descrizione": "in provincia di",
+        "valore": "Como"
+      },
+      {
+        "id": "",
+        "descrizione": "Si",
+        "valore": "on"
+      }
+    ]
+  },
+  {
+    "sezione": "3.1 Piano Finanziario - Piano Finanziario",
+    "campi": [
+      {
+        "id": "",
+        "descrizione": "B.5.5, Manifattura Avanzata, A1, Spesa totale Servizio",
+        "valore": "10000"
+      },
+      {
+        "id": "",
+        "descrizione": "B.5.5, Manifattura Avanzata, A1, Intensità Agevolazione",
+        "valore": "50"
+      },
+      {
+        "id": "",
+        "descrizione": "B.5.5, Manifattura Avanzata, A1, Contributo",
+        "valore": "5000"
+      },
+      {
+        "id": "",
+        "descrizione": "B.5.6, Manifattura additiva, A1, Spesa totale Servizio",
+        "valore": "11000"
+      },
+      {
+        "id": "",
+        "descrizione": "B.5.6, Manifattura additiva, A1, Intensità Agevolazione",
+        "valore": "50"
+      },
+      {
+        "id": "",
+        "descrizione": "B.5.6, Manifattura additiva, A1, Contributo",
+        "valore": "5500"
+      },
+      {
+        "id": "",
+        "descrizione": "B.5.7, Realtà aumentata, A1, Spesa totale Servizio",
+        "valore": "12000"
+      },
+      {
+        "id": "",
+        "descrizione": "B.5.7, Realtà aumentata, A1, Intensità Agevolazione",
+        "valore": "10"
+      },
+      {
+        "id": "",
+        "descrizione": "B.5.7, Realtà aumentata, A1, Contributo",
+        "valore": "1200"
+      },
+      {
+        "id": "",
+        "descrizione": "B.5.8, Simulazione, A1, Spesa totale Servizio",
+        "valore": "13000"
+      },
+      {
+        "id": "",
+        "descrizione": "B.5.8, Simulazione, A1, Intensità Agevolazione",
+        "valore": "100"
+      },
+      {
+        "id": "",
+        "descrizione": "B.5.8, Simulazione, A1, Contributo",
+        "valore": "13000"
+      },
+      {
+        "id": "",
+        "descrizione": "Digitale & Intelligente",
+        "valore": "on"
+      }
+    ]
+  },
+  {
+    "sezione": "3.2 Piano Finanziario - Criteri di Selezione",
+    "campi": [
+      {
+        "id": "",
+        "descrizione": "Numero servizi per progetto",
+        "valore": "1"
+      },
+      {
+        "id": "",
+        "descrizione": "1 o più servizi di classe A1 (A1+ A1) [12 punti]",
+        "valore": "on"
+      },
+      {
+        "id": "",
+        "descrizione": "B6.1 o B6.2 o B6.3 o B6.4 o B6.5 + B5.2 Cloud + B5.4 Cybersecurity [6 punti]",
+        "valore": "Selezionato"
+      },
+      {
+        "id": "",
+        "descrizione": "Patrimonio Netto 2021 *",
+        "valore": "2222222"
+      },
+      {
+        "id": "",
+        "descrizione": "Patrimonio Netto 2022 *",
+        "valore": "1111111"
+      },
+      {
+        "id": "",
+        "descrizione": "Almeno 3% [4 punti]",
+        "valore": "on"
+      }
+    ]
+  },
+  {
+    "sezione": "3.3 Piano Finanziario - Capacità Economica",
+    "campi": [
+      {
+        "id": "",
+        "descrizione": "a) Dichiarazione di impegno dei soci all’integrale versamento prima della richiesta di erogazione, anche a titolo di anticipazione",
+        "valore": "on"
+      },
+      {
+        "id": "",
+        "descrizione": "b) Dichiarazione di impegno dei soci al versamento di eventuali crediti ancora dovuti (voce a dello stato patrimoniale ex art. 2424 c.c.) prima della richiesta di erogazione, anche a titolo di anticipazione",
+        "valore": "on"
+      },
+      {
+        "id": "",
+        "descrizione": "c) Copia dell’atto notarile di aumento di capitale depositato presso la cciaa territorialmente competente, ed attestante, ai sensi del codice civile, l'aumento di capitale deliberato;",
+        "valore": "on"
+      },
+      {
+        "id": "",
+        "descrizione": "d) Copia delle contabili bancarie attestanti il versamento effettuato in caso di versamenti in conto capitale effettuati da soci",
+        "valore": "on"
+      }
+    ]
+  },
+  {
+    "sezione": "4.1 Dati di Progetto - Scheda Tecnica",
+    "campi": [
+      {
+        "id": "",
+        "descrizione": "Titolo progetto",
+        "valore": "HTML Form Helper"
+      },
+      {
+        "id": "",
+        "descrizione": "Titolo",
+        "valore": "HTML Form Helper"
+      },
+      {
+        "id": "",
+        "descrizione": "Durata progetto (in mesi)",
+        "valore": "3"
+      },
+      {
+        "id": "",
+        "descrizione": "Data inizio prevista",
+        "valore": "2025-05-13"
+      },
+      {
+        "id": "",
+        "descrizione": "Data fine prevista",
+        "valore": "2025-05-30"
+      },
+      {
+        "id": "",
+        "descrizione": "Sintesi del progetto",
+        "valore": "Estensione per Google Chrome per facilitare l'interazione con i form HTML: estrae la struttura essenziale dei form da una pagina web, permette di visualizzarne e modificarne il codice sorgente semplificato, salvarlo, e utilizzare dati strutturati (JSON) per compilare automaticamente i campi.\nFunzionalità\nEstrazione Form: Identifica e estrae i form HTML presenti nella pagina attiva.\nSemplificazione HTML: Rimuove elementi e attributi non essenziali (come script, stili, elementi nascosti senza etichette/placeholder, ecc.) per ottenere una struttura più pulita e focalizzata sui campi compilabili.\nVisualizzazione Flessibile: Permette di passare tra una Anteprima HTML (rendering del codice estratto) e la visualizzazione del Codice Sorgente modificabile.\nModifica Codice Sorgente: Nella vista codice sorgente, è possibile modificare l'HTML estratto. Le modifiche possono essere \"applicate\" per aggiornare la vista (e i dati usati per Copia/Salva/Assegna, sebbene l'assegnazione si basi sugli ID originali).\nCopia HTML: Copia negli appunti il codice HTML estratto e semplificato (o quello modificato nella textarea).\nSalva HTML: Salva l'HTML estratto e semplificato (o quello modificato) come file .html, includendo stili CSS di base per una buona leggibilità."
+      },
+      {
+        "id": "",
+        "descrizione": "Nome RUP",
+        "valore": "Rossano"
+      },
+      {
+        "id": "",
+        "descrizione": "Cognome RUP",
+        "valore": "Brazzi"
+      }
+    ]
+  },
+  {
+    "sezione": "4.3 Dati di Progetto - Indicatori",
+    "campi": [
+      {
+        "id": "",
+        "descrizione": "Imprese beneficiarie di un sostegno, RCO01, Output, N., Valore",
+        "valore": "1"
+      },
+      {
+        "id": "",
+        "descrizione": "Imprese beneficiarie di un sostegno per interventi che contribuiscono alla riduzione delle pressioni ambientali, RCO01, Ambientale di Output, N., Valore",
+        "valore": "2"
+      },
+      {
+        "id": "",
+        "descrizione": "Imprese sostenute mediante sovvenzioni, RCO02, Output, N., Valore",
+        "valore": "3"
+      },
+      {
+        "id": "",
+        "descrizione": "Posti di lavoro creati presso i soggetti beneficiari di un sostegno [Femminile], RCR01, Risultato, N., Valore",
+        "valore": "4"
+      },
+      {
+        "id": "",
+        "descrizione": "Posti di lavoro creati presso i soggetti beneficiari di un sostegno [Maschile], RCR01, Risultato, N., Valore",
+        "valore": "5"
+      },
+      {
+        "id": "",
+        "descrizione": "Posti di lavoro creati presso i soggetti beneficiari di un sostegno [Non Binario], RCR01, Risultato, N., Valore",
+        "valore": "4"
+      },
+      {
+        "id": "",
+        "descrizione": "Investimenti privati abbinati al sostegno pubblico, RCR02, Risultato, €, Valore",
+        "valore": "4"
+      },
+      {
+        "id": "",
+        "descrizione": "Investimenti privati combinati al sostegno pubblico per interventi che contribuiscono alla riduzione delle pressioni ambientali in campo ambientale, RCR02, Ambientale di Risultato, €, Valore",
+        "valore": "4"
+      },
+      {
+        "id": "",
+        "descrizione": "Attività connesse con la strategia di specializzazione intelligente - S3, N., Valore",
+        "valore": "2"
+      }
+    ]
+  }
+]
