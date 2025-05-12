@@ -14,6 +14,13 @@ Estensione per Google Chrome per facilitare l'interazione con i form HTML: estra
 *   **Assegnazione Valori:** Compila automaticamente i campi del form nella pagina web attiva utilizzando i dati caricati, basandosi sulla corrispondenza dell'attributo `id` del campo con l'`id` specificato nel JSON.
 *   **Messaggi di Stato:** Fornisce feedback visivo sull'esito delle operazioni.
 
+## Funzionalità AI (Nuovo!)
+
+*   **Configurazione AI:** Permette di selezionare un provider LLM (Google Gemini, OpenAI ChatGPT) e inserire la relativa chiave API per abilitare le funzionalità AI. Le impostazioni sono salvate localmente.
+*   **Mapping Semantico con AI:** Un nuovo pulsante "Mappa Dati con AI" analizza l'HTML del form estratto e i dati JSON forniti dall'utente. Utilizza l'LLM configurato per capire il significato dei campi e dei dati, generando un nuovo JSON che mappa i valori JSON agli `id` corretti dei campi del form.
+*   **Revisione del Mapping:** Il JSON generato dall'AI viene mostrato in una nuova area di testo, permettendo all'utente di controllare (ed eventualmente copiare/modificare) il mapping suggerito prima di applicarlo.
+*   **Assegnazione Valori Mappati dall'AI:** Un pulsante dedicato permette di applicare i valori utilizzando il JSON mappato dall'AI.
+
 ## Installazione
 
 Per installare l'estensione in Chrome (o browser compatibili come Brave, Edge):
@@ -41,9 +48,24 @@ Per installare l'estensione in Chrome (o browser compatibili come Brave, Edge):
     *   Assicurati che i dati JSON rispettino il formato specificato (vedi sotto).
 7.  **Assegnazione Valori:** Clicca sul pulsante **"Assegna Valori al Form"**. L'estensione scorrerà i dati JSON e tenterà di inserire i valori nei campi del form nella pagina web attiva che corrispondono agli ID specificati nel JSON.
 
+8.  **(Opzionale) Configurazione AI:**
+    *   Nella sezione "Configurazione AI", **seleziona il Modello LLM specifico** che desideri utilizzare dall'elenco (es. Gemini 1.5 Flash, GPT-4o). I modelli sono raggruppati per provider (Google, OpenAI).
+    *   Inserisci la tua chiave API **corrispondente al provider del modello scelto** nel campo "Chiave API". (Es. usa una chiave Google Cloud per i modelli Gemini, una chiave OpenAI per i modelli GPT).
+    *   Clicca su "Salva Configurazione AI". La configurazione verrà salvata per usi futuri. **Nota:** Le chiavi API sono necessarie per usare le funzionalità AI e potrebbero comportare costi con il provider scelto in base al modello e all'utilizzo.
+9.  **(Opzionale) Mapping con AI:**
+    *   Assicurati di aver estratto un form (passo 3) e di aver caricato o incollato i dati JSON nell'area "Dati per Compilazione (JSON Input)" (passo 6).
+    *   Assicurati che la Configurazione AI sia valida (passo 8).
+    *   Clicca sul pulsante **"Mappa Dati con AI"**. L'estensione invierà l'HTML e il JSON all'LLM configurato.
+    *   Attendi il completamento. Il risultato (un nuovo JSON con i mapping `id`-`valore` suggeriti) apparirà nell'area "Mapping Dati Suggerito dall'AI".
+    *   **Verifica il mapping suggerito dall'AI.** Potrebbe non essere perfetto.
+10. **(Opzionale) Assegnazione Valori Mappati dall'AI:**
+    *   Se il mapping suggerito dall'AI nell'area "Mapping Dati Suggerito dall'AI" è corretto, clicca sul pulsante **"Assegna Valori (da Suggerimento AI)"**.
+    *   L'estensione utilizzerà questo JSON mappato per compilare il form nella pagina web attiva.
+    
+    
 ## Formato Dati JSON per la Compilazione
 
-I dati per la compilazione devono essere forniti come un **array di oggetti JSON**. Ogni oggetto deve avere due chiavi principali:
+I dati per la compilazione diretta devono essere forniti come un **array di oggetti JSON**. Ogni oggetto deve avere due chiavi principali:
 
 *   `id`: Una stringa che corrisponde all'attributo `id` del campo (input, textarea, select) nella pagina web.
 *   `valore`: Una stringa o un valore booleano che rappresenta il dato da inserire nel campo.

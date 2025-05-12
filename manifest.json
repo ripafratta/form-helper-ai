@@ -1,13 +1,16 @@
 {
   "manifest_version": 3,
-  "name": "HTML Form Helper",
-  "version": "2.0",
-  "description": "Estrae form HTML, li ripulisce e aiuta nella compilazione con dati JSON.",
+  "name": "HTML Form Helper AI", 
+  "version": "2.1", 
+  "description": "Estrae form HTML, li ripulisce, aiuta nella compilazione con dati JSON e usa l'AI per il mapping semantico.",
   "permissions": [
     "activeTab",
     "scripting",
-    "storage",
-    "downloads" 
+    "storage", 
+    "downloads"
+    // Potrebbe essere necessario aggiungere host_permissions se si chiama direttamente API
+    // Es: "*://generativelanguage.googleapis.com/*", "*://api.openai.com/*"
+    // Ma per ora le chiamate sono nel popup, quindi non dovrebbero servire.
   ],
   "action": {
     "default_popup": "popup.html",
@@ -25,7 +28,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["purify.min.js", "content.js"] 
+      "js": ["purify.min.js", "content.js"]
     }
   ]
 }

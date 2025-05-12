@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Form Extractor Pro</title>
+  <title>Form Extractor Pro AI</title>
   <style>
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -11,7 +11,7 @@
       color: #333;
       background-color: #f9f9f9;
     }
-    #controls, #outputContainer, #actions, #dataContainer { 
+    #controls, #outputContainer, #actions, #aiConfigContainer, #dataContainer, #aiOutputContainer { 
       margin-bottom: 15px; 
       padding: 12px;
       border-radius: 4px;
@@ -31,17 +31,23 @@
       font-weight: 600;
       color: #444;
     }
-    input[type="text"] { 
-      width: calc(100% - 16px); 
+    input[type="text"], input[type="password"], select { 
+      width: calc(100% - 18px); /* Adjusted for padding/border */
       padding: 8px; 
       margin-bottom: 10px;
       border: 1px solid #ddd;
       border-radius: 4px;
       font-family: inherit;
+      box-sizing: border-box;
     }
+     /* Specific width for API key input if needed */
+    #apiKeyInput { 
+       /* width: calc(70% - 18px); */ /* Example */
+    }
+
     textarea {
       width: 100%;
-      min-height: 150px; /* Default per dataInput */
+      min-height: 150px; 
       max-height: 400px;
       box-sizing: border-box;
       border: 1px solid #ddd;
@@ -60,9 +66,15 @@
       border-radius: 4px;
       background-color: white;
     }
-    #htmlSourceTextarea { /* Stile specifico per la textarea del codice HTML */
-        min-height: 300px; /* Uguale a previewFrame */
+    #htmlSourceTextarea { 
+        min-height: 300px; 
         max-height: 500px;
+    }
+     /* Height for AI output textarea */
+    #aiOutputTextarea {
+      min-height: 100px;
+      max-height: 250px;
+      background-color: #f0f0f0; /* Indicate read-only */
     }
     .btn {
       background-color: #3498db;
@@ -73,9 +85,11 @@
       cursor: pointer;
       font-weight: 500;
       margin-right: 8px;
+      margin-bottom: 5px; /* Ensure buttons wrap nicely */
       transition: background-color 0.2s;
       display: inline-flex;
       align-items: center;
+      vertical-align: middle; /* Align buttons nicely on the same line */
     }
     .btn:hover {
       background-color: #2980b9;
@@ -84,6 +98,7 @@
     .btn-success { background-color: #2ecc71; }
     .btn-secondary { background-color: #95a5a6; }
     .btn-warning { background-color: #f39c12; }
+    .btn-info { background-color: #3498db; opacity: 0.9; } /* For AI mapping */
     .btn:disabled {
       background-color: #bdc3c7;
       cursor: not-allowed;
@@ -100,6 +115,8 @@
     .status-info { background-color: #e8f4fd; border-left: 4px solid #3498db; color: #333; }
     .status-success { background-color: #e8fcf1; border-left: 4px solid #2ecc71; color: #333; }
     .status-error { background-color: #fdebeb; border-left: 4px solid #e74c3c; color: #c0392b; font-weight: 500; }
+    .status-warning { background-color: #fef9e7; border-left: 4px solid #f39c12; color: #b7791f; } /* Warning status */
+
     .btn-icon { margin-right: 5px; }
     .section-header {
       display: flex;
@@ -107,10 +124,10 @@
       align-items: center;
       margin-bottom: 10px;
     }
-    .file-input-wrapper { /* Mantenuto per il bottone di caricamento JSON */
+    .file-input-wrapper { 
       position: relative;
       overflow: hidden;
-      display: inline-block; /* Per far funzionare il trucco dell'input file nascosto */
+      display: inline-block; 
     }
     .file-input-wrapper input[type=file] {
       position: absolute;
@@ -124,6 +141,7 @@
     .hidden { display: none !important; }
     .view-toggle-label { margin-right: 10px; font-weight: normal; }
     .view-toggle-controls { margin-bottom: 10px; }
+    .config-item { margin-bottom: 10px; } /* Spacing for config items */
   </style>
 </head>
 <body>
@@ -178,37 +196,97 @@
     </button>
   </div>
 
+ <div id="aiConfigContainer">
+      <h3>Configurazione AI</h3>
+      <div class="config-item">
+          <!-- Modificato: label e select per Modello specifico -->
+          <label for="llmModelSelect">Modello LLM:</label>
+          <select id="llmModelSelect">
+              <option value="none">Nessuno / Disabilitato</option>
+              <optgroup label="Google Gemini & Gemma">
+                  <!-- Gemini 2.5 (Preview) -->
+                  <option value="gemini-2.5-pro-preview-05-06">Gemini 2.5 Pro (Preview 05-06)</option>
+                  <option value="gemini-2.5-flash-preview-04-17">Gemini 2.5 Flash (Preview 04-17)</option>
+                  <!-- Gemini 1.5 -->
+                  <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro (Potente)</option>
+                  <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash (Veloce)</option>
+                   <!-- Gemini "2.0" (Nomi ipotetici come da richiesta) -->
+                  <option value="gemini-2.0-flash">Gemini 2.0 Flash (?)</option>
+                  <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite (?)</option>
+                  <!-- Gemma 3 (Fine-tuned IT, *Verificare endpoint API*) -->
+                  <option value="gemma-3-27b-it">Gemma 3 27B IT (*)</option>
+                  <option value="gemma-3-12b-it">Gemma 3 12B IT (*)</option>
+                  <option value="gemma-3-4b-it">Gemma 3 4B IT (*)</option>
+              </optgroup>
+              <optgroup label="OpenAI ChatGPT">
+                  <option value="openai-gpt-4o">GPT-4o (Nuovo/Veloce/Potente)</option>
+                  <option value="openai-gpt-4-turbo">GPT-4 Turbo (Potente)</option>
+                  <option value="openai-gpt-3.5-turbo">GPT-3.5 Turbo (Equilibrato)</option>
+              </optgroup>
+              <!-- Aggiungere altri provider/modelli -->
+          </select>
+      </div>
+      <div class="config-item">
+          <label for="apiKeyInput">Chiave API:</label>
+          <input type="password" id="apiKeyInput" placeholder="Inserisci la chiave API per il modello scelto">
+      </div>
+      <button id="saveAiConfigButton" class="btn btn-primary">
+          <!-- ... (icona save) ... -->
+          Salva Configurazione AI
+      </button>
+  </div>
+
   <div id="dataContainer">
     <div class="section-header">
-      <h3>Dati per Compilazione (JSON)</h3>
+      <h3>Dati per Compilazione (JSON Input)</h3>
+      
+      <!-- *** SEZIONE RIPRISTINATA *** -->
       <div class="file-input-wrapper">
         <button id="loadDataButton" class="btn btn-warning">
           <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path> <!-- Icona graffetta (upload/attach) -->
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path> 
           </svg>
           Carica file .json
         </button>
-        <input type="file" id="dataFileInput" accept=".json">
+        <input type="file" id="dataFileInput" accept=".json"> 
       </div>
+      <!-- *** FINE SEZIONE RIPRISTINATA *** -->
+
     </div>
-    <textarea id="dataInput" placeholder='Incolla qui i dati JSON o carica da file. Formato:
-[
-  { "id": "id_campo1", "valore": "valore_da_inserire" },
-  { "id": "id_checkbox", "valore": "OK" },
-  { "id": "id_campo2", "valore": "altro_valore" }
-]'></textarea>
+    <textarea id="dataInput" placeholder='Incolla qui i dati JSON o carica da file... Formato input suggerito per AI: 
+[ { "descrizione": "Significato dato", "valore_dato": "Valore Effettivo" }, ... ]
+Formato output AI (e input per assegnazione): 
+[ { "id": "id_campo_form", "valore": "Valore Effettivo" }, ... ]'></textarea>
     <br><br>
     <button id="assignValuesButton" class="btn btn-success">
       <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
         <polyline points="22 4 12 14.01 9 11.01"></polyline>
       </svg>
-      Assegna Valori al Form
+      Assegna Valori (da JSON Input)
     </button>
+     <button id="mapWithAiButton" class="btn btn-info">
+         <svg class="btn-icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a10 10 0 1 0 10 10 A10.1 10.1 0 0 0 12 2z"></path>
+            <path d="M12 6v6l4 2"></path>
+            <path d="M17.6 17.6l-1.4 1.4"></path>
+            <path d="M6.4 6.4L5 5"></path>
+         </svg>
+         Mappa Dati con AI
+     </button>
   </div>
 
-  <div id="statusMessage"></div>
+   <div id="aiOutputContainer" class="hidden">
+        <h3>Mapping Dati Suggerito dall'AI</h3>
+        <textarea id="aiOutputTextarea" readonly placeholder="Il mapping JSON suggerito dall'AI apparirà qui..."></textarea>
+        <br><br>
+        <button id="assignAiValuesButton" class="btn btn-success">
+           <!-- ... (icona assign) ... -->
+           Assegna Valori (da Suggerimento AI)
+       </button>
+   </div>
 
+  <div id="statusMessage"></div>
   <script src="popup.js"></script>
 </body>
 </html>
