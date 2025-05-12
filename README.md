@@ -102,4 +102,4 @@ Questo progetto è rilasciato sotto la licenza MIT.
 ## Crediti
 Utilizza DOMPurify per la sanitizzazione (sebbene la logica di estrazione corrente si concentri più sulla semplificazione strutturale che sulla sanitizzazione del HTML grezzo dell'intera pagina).
 
-Questo codice è stato realizzato con il supporto di Google AI Studio: link alla chat: https://aistudio.google.com/prompts/10V2LuSonl2oIcrxz-iBnHa6SNxnRqXNH 
+Questo codice è stato realizzato con il supporto di Google AI Studio: link alla chat: https://aistudio.google.com/prompts/1IbkPFY2MtOLPi-Y4GxCHpa4-sodtP3Bw 

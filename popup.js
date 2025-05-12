@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const dataFileInput = document.getElementById('dataFileInput');
     const loadDataButton = document.getElementById('loadDataButton');
     const dataInput = document.getElementById('dataInput');
-    const assignValuesButton = document.getElementById('assignValuesButton');
+    const assignValuesButton = document.getElementById('assignValuesButton'); // Bottone per JSON input
     const statusMessage = document.getElementById('statusMessage');
     const llmModelSelect = document.getElementById('llmModelSelect');
     const apiKeyInput = document.getElementById('apiKeyInput');
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const mapWithAiButton = document.getElementById('mapWithAiButton');
     const aiOutputContainer = document.getElementById('aiOutputContainer');
     const aiOutputTextarea = document.getElementById('aiOutputTextarea');
-    const assignAiValuesButton = document.getElementById('assignAiValuesButton');
+    const assignAiValuesButton = document.getElementById('assignAiValuesButton'); // Bottone per output AI
     const aiConfigSection = document.getElementById('aiConfigSection');
     const extractionSection = document.getElementById('extractionSection');
     const fillingSection = document.getElementById('fillingSection');
@@ -33,7 +33,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===========================================
     // --- Funzioni Helper (Definizioni Chiave) ---
     // ===========================================
-
     function showStatus(message, type = 'info', duration = 5000) {
         statusMessage.textContent = message;
         statusMessage.className = ''; // Reset classes
@@ -138,14 +137,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // *** DEFINIZIONE DELLA FUNZIONE createMappingPrompt ***
     function createMappingPrompt(htmlForm, inputJsonString) {
         let cleanedJsonString = inputJsonString;
         try {
             const parsed = JSON.parse(inputJsonString);
             cleanedJsonString = JSON.stringify(parsed, null, 2);
         } catch (e) { /* Ignora errore parsing */ }
-        // Usa la versione con backtick escapati
         return `
 Analizza il seguente form HTML semplificato e i dati JSON forniti.
 Il tuo obiettivo è mappare semanticamente i dati JSON ai campi del form HTML.
@@ -173,7 +170,6 @@ ${cleanedJsonString}
 Genera ora l'array JSON di mapping.`;
     }
 
-    // *** DEFINIZIONE DELLA FUNZIONE assignValuesToPage ***
     async function assignValuesToPage(jsonData) {
         if (!Array.isArray(jsonData)) {
             showStatus('Errore interno: Dati per assegnazione non validi (non è un array).', 'error');
@@ -183,10 +179,17 @@ Genera ora l'array JSON di mapping.`;
             showStatus('Nessun dato valido da assegnare.', 'info');
             return;
         }
-        if (!jsonData.every(item => typeof item === 'object' && item !== null && 'id' in item && typeof item.id === 'string' && 'valore' in item)) {
-            showStatus('Errore: Formato JSON per assegnazione non valido. Richiesto: [{"id": "stringa", "valore": "qualsiasi"}].', 'error', 7000);
+        // La validazione dettagliata del formato {id, valore} è ora fatta qui,
+        // dopo il preprocessing per l'input utente.
+        if (!jsonData.every(item =>
+            typeof item === 'object' && item !== null &&
+            'id' in item && typeof item.id === 'string' && item.id.trim() !== '' &&
+            'valore' in item
+        )) {
+            showStatus('Errore: Formato JSON finale per assegnazione non valido. Richiesto array di oggetti con chiavi "id" (stringa non vuota) e "valore".', 'error', 7000);
             return;
         }
+
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         if (!tab || !tab.id) {
             showStatus('Scheda attiva non trovata per l\'assegnazione.', 'error');
@@ -196,7 +199,7 @@ Genera ora l'array JSON di mapping.`;
         try {
             const results = await chrome.scripting.executeScript({
                 target: { tabId: tab.id },
-                func: (dataToAssign) => {
+                func: (dataToAssign) => { // Questa funzione viene eseguita nel content script
                     if (typeof window.assignFormValuesInPage === 'function') {
                         return window.assignFormValuesInPage(dataToAssign);
                     } else {
@@ -223,6 +226,55 @@ Genera ora l'array JSON di mapping.`;
             console.error('Errore durante l\'iniezione dello script di assegnazione:', error);
             showStatus(`Errore script assegnazione: ${error.message}`, 'error');
         }
+    }
+
+    // ===========================================
+    // --- NUOVA FUNZIONE DI PREPROCESSING JSON ---
+    // ===========================================
+    function preprocessJsonForAssignment(parsedJsonInput) {
+        const extractedPairs = [];
+
+        // Scenario A: JSON è già un array piatto di {id, valore}
+        if (Array.isArray(parsedJsonInput) && parsedJsonInput.every(item =>
+            typeof item === 'object' && item !== null &&
+            'id' in item && typeof item.id === 'string' &&
+            'valore' in item
+        )) {
+            console.log("JSON di input già nel formato corretto (array piatto).");
+            // Restituisce una nuova mappa per assicurare solo le chiavi necessarie e non modificare l'originale
+            return parsedJsonInput.map(item => ({ id: item.id, valore: item.valore }));
+        }
+
+        // Scenario B: JSON è un array di oggetti "sezione", ognuno con un array "campi"
+        // Cerchiamo chiavi comuni per l'array interno
+        const commonInnerArrayKeys = ['campi', 'fields', 'items', 'data', 'elements', 'values'];
+        if (Array.isArray(parsedJsonInput)) {
+            parsedJsonInput.forEach(section => {
+                if (typeof section === 'object' && section !== null) {
+                    for (const key of commonInnerArrayKeys) {
+                        if (key in section && Array.isArray(section[key])) {
+                            section[key].forEach(field => {
+                                if (typeof field === 'object' && field !== null &&
+                                    'id' in field && typeof field.id === 'string' && field.id.trim() !== '' &&
+                                    'valore' in field) {
+                                    extractedPairs.push({ id: field.id, valore: field.valore });
+                                }
+                            });
+                        }
+                    }
+                }
+            });
+        }
+
+        if (extractedPairs.length > 0) {
+            console.log("Coppie id/valore estratte da struttura annidata:", extractedPairs.length);
+        } else if (Array.isArray(parsedJsonInput)) { // Era un array, ma non ha matchato A o B
+            console.log("JSON di input è un array, ma non nel formato piatto atteso né con chiavi interne note (es. 'campi').");
+        } else { // Non era un array all'inizio
+            console.warn("JSON di input non è un array, preprocessing per scenari A o B non applicabile.");
+        }
+
+        return extractedPairs;
     }
 
 
@@ -337,7 +389,7 @@ Genera ora l'array JSON di mapping.`;
                 aiOutputContainer.classList.toggle('hidden', !isAiVisible);
                 assignAiValuesButton.disabled = !isAiVisible || !aiOutputTextarea.value;
                 aiConfigSection?.classList.toggle('open', !!savedState.aiConfigOpen);
-                extractionSection?.classList.toggle('open', savedState.extractionOpen !== false);
+                extractionSection?.classList.toggle('open', savedState.extractionOpen !== false); // Default true
                 fillingSection?.classList.toggle('open', !!savedState.fillingOpen);
                 showStatus('Stato sessione precedente ripristinato.', 'info', 3000);
             } else {
@@ -346,13 +398,15 @@ Genera ora l'array JSON di mapping.`;
                 saveButton.disabled = true;
                 assignAiValuesButton.disabled = true;
                 aiOutputContainer.classList.add('hidden');
-                aiConfigSection?.classList.remove('open');
-                extractionSection?.classList.add('open');
-                fillingSection?.classList.remove('open');
+                // Default collapsible states if no session
+                aiConfigSection?.classList.remove('open'); // AI config default closed (loadAiConfig might open it)
+                extractionSection?.classList.add('open');   // Extraction default open
+                fillingSection?.classList.remove('open'); // Filling default closed
             }
         } catch (error) {
             console.error("Error loading session state:", error);
             showStatus('Errore nel caricamento dello stato della sessione.', 'error');
+            // Default collapsible states on error
             aiConfigSection?.classList.remove('open');
             extractionSection?.classList.add('open');
             fillingSection?.classList.remove('open');
@@ -402,15 +456,15 @@ Genera ora l'array JSON di mapping.`;
             }
             const sessionResult = await chrome.storage.session.get(SESSION_STATE_KEY);
             // Imposta stato iniziale AI Config solo se non già caricato da sessione
-            // O se effettivamente serve configurazione
+            // E se effettivamente serve configurazione (nessuna chiave o modello salvato)
             if (!sessionResult[SESSION_STATE_KEY]?.hasOwnProperty('aiConfigOpen')) {
-                aiConfigSection?.classList.toggle('open', needsConfig);
+                 aiConfigSection?.classList.toggle('open', needsConfig);
             }
 
         } catch (error) {
             console.error('Errore caricamento configurazione AI:', error);
             showStatus('Errore nel caricamento della configurazione AI.', 'error');
-            aiConfigSection?.classList.add('open');
+            aiConfigSection?.classList.add('open'); // Apri in caso di errore per permettere all'utente di vedere/correggere
         }
     }
 
@@ -433,7 +487,7 @@ Genera ora l'array JSON di mapping.`;
             showStatus('Configurazione AI salvata con successo!', 'success');
             console.log('Configurazione AI salvata:', aiConfig.model);
             if (aiConfig.model !== 'none' && aiConfig.apiKey) {
-                aiConfigSection?.classList.remove('open');
+                aiConfigSection?.classList.remove('open'); // Chiudi se configurato
                 saveSessionState(); // Salva anche lo stato del collapsible
             }
         } catch (error) {
@@ -446,9 +500,8 @@ Genera ora l'array JSON di mapping.`;
     // --- Event Listeners for State Saving ---
     // ===========================================
     pageNameInput.addEventListener('input', saveSessionState);
-    dataInput.addEventListener('input', saveSessionState);
-    viewModeRadios.forEach(radio => radio.addEventListener('change', saveSessionState));
-    // Altri salvataggi sono inseriti nelle funzioni specifiche
+    dataInput.addEventListener('input', saveSessionState); // Salva JSON input mentre l'utente digita/incolla
+    // aiOutputTextarea non ha un listener 'input' perché è readonly, il suo stato viene salvato dopo il mapping AI
 
     // ===========================================
     // --- Core Functionality Event Listeners ---
@@ -465,7 +518,7 @@ Genera ora l'array JSON di mapping.`;
             } else {
                 htmlSourceTextarea.value = formatHtmlForTextarea(currentHtmlContent || '');
             }
-            // State already saved by separate listener
+            saveSessionState(); // Salva cambio view mode
         });
     });
 
@@ -473,7 +526,7 @@ Genera ora l'array JSON di mapping.`;
     applySourceChangesButton.addEventListener('click', () => {
         currentHtmlContent = cleanHtmlFromTextareaFormatting(htmlSourceTextarea.value);
         previewFrame.srcdoc = currentHtmlContent;
-        htmlSourceTextarea.value = formatHtmlForTextarea(currentHtmlContent);
+        htmlSourceTextarea.value = formatHtmlForTextarea(currentHtmlContent); // Riformatta per coerenza
         showStatus('Modifiche codice sorgente applicate.', 'success');
         saveSessionState(); // Salva HTML aggiornato
     });
@@ -481,28 +534,48 @@ Genera ora l'array JSON di mapping.`;
     // Estrazione Form
     extractFormsButton.addEventListener('click', async () => {
         showStatus('Estrazione forms in corso...', 'info', 0);
-        currentHtmlContent = null;
+        currentHtmlContent = null; // Resetta stato HTML
         previewFrame.srcdoc = '<p>Estrazione...</p>';
         htmlSourceTextarea.value = ''; copyButton.disabled = true; saveButton.disabled = true;
         aiOutputContainer.classList.add('hidden'); aiOutputTextarea.value = ''; assignAiValuesButton.disabled = true;
+        // Non resettare pageNameInput, dataInput, aiOutputTextarea qui, saranno gestiti da save/load session
+
+        // Forza la vista anteprima
         document.querySelector('input[name="viewMode"][value="preview"]').checked = true;
-        previewFrame.classList.remove('hidden'); htmlSourceTextarea.classList.add('hidden'); applySourceChangesButton.classList.add('hidden');
+        previewFrame.classList.remove('hidden');
+        htmlSourceTextarea.classList.add('hidden');
+        applySourceChangesButton.classList.add('hidden');
+
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         if (!tab || !tab.id) { showStatus('Errore scheda attiva.', 'error'); previewFrame.srcdoc = '<p>Errore scheda</p>'; return; }
+
+        // Precompila nome pagina se vuoto, poi salva sessione
         if (!pageNameInput.value && tab.title) { pageNameInput.value = sanitizeFilenameForSave(tab.title); }
         else if (!pageNameInput.value) { pageNameInput.value = 'pagina_estratta'; }
-        saveSessionState(); // Save suggested/default page name immediately
+        // Salva il nome pagina (suggerito o default) e lo stato corrente prima dell'estrazione
+        saveSessionState();
+
         try {
             const results = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: () => window.extractAndSimplifyForms_content() });
             if (results && results[0] && typeof results[0].result === 'string') {
-                currentHtmlContent = results[0].result;
+                currentHtmlContent = results[0].result; // Aggiorna stato HTML
                 previewFrame.srcdoc = currentHtmlContent;
+                // htmlSourceTextarea.value = formatHtmlForTextarea(currentHtmlContent); // Prepara per vista sorgente
+
                 if (currentHtmlContent.includes("Nessun tag <form>")) { showStatus('Nessun form trovato.', 'info'); }
                 else if (currentHtmlContent.trim() === '' || (currentHtmlContent.includes("<!-- Form originale") && !currentHtmlContent.includes("<form")) ) { showStatus('Nessun contenuto estraibile.', 'info'); previewFrame.srcdoc = '<p>Nessun contenuto.</p>';}
                 else { showStatus('Estrazione completata!', 'success'); copyButton.disabled = false; saveButton.disabled = false; }
-                saveSessionState(); // Save state after successful extraction
-            } else { showStatus('Errore estrazione (risultato).', 'error'); previewFrame.srcdoc = '<p>Errore estrazione</p>'; }
-        } catch (error) { showStatus(`Errore estrazione (script): ${error.message}`, 'error'); previewFrame.srcdoc = '<p>Errore script</p>'; }
+                saveSessionState(); // Salva stato dopo estrazione riuscita
+            } else {
+                showStatus('Errore estrazione (risultato).', 'error'); previewFrame.srcdoc = '<p>Errore estrazione</p>';
+                currentHtmlContent = '<p style="color:red">Errore estrazione.</p>'; // Salva un messaggio di errore
+                saveSessionState();
+            }
+        } catch (error) {
+            showStatus(`Errore estrazione (script): ${error.message}`, 'error'); previewFrame.srcdoc = '<p>Errore script</p>';
+            currentHtmlContent = `<p style="color:red">Errore script estrazione: ${error.message}</p>`;
+            saveSessionState();
+        }
     });
 
     // Caricamento Dati JSON
@@ -513,69 +586,173 @@ Genera ora l'array JSON di mapping.`;
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
-                const content = e.target.result; JSON.parse(content);
-                dataInput.value = content;
+                const content = e.target.result;
+                JSON.parse(content); // Valida solo se è JSON, non lo pre-processa qui
+                dataInput.value = content; // Aggiorna textarea
                 showStatus(`File "${file.name}" caricato.`, 'success');
-                aiOutputContainer.classList.add('hidden'); aiOutputTextarea.value = ''; assignAiValuesButton.disabled = true;
-                saveSessionState(); // Save state after loading
-            } catch (jsonError) { showStatus(`File non JSON valido: ${jsonError.message}`, 'error', 7000); dataInput.value = ''; }
+                // Resetta output AI se si caricano nuovi dati
+                aiOutputContainer.classList.add('hidden');
+                aiOutputTextarea.value = '';
+                assignAiValuesButton.disabled = true;
+                saveSessionState(); // Salva stato dopo caricamento
+            } catch (jsonError) { showStatus(`File "${file.name}" non è JSON valido: ${jsonError.message}`, 'error', 7000); dataInput.value = ''; }
         };
         reader.onerror = (e) => { showStatus(`Errore lettura file "${file.name}".`, 'error'); dataInput.value = ''; };
-        reader.readAsText(file); event.target.value = null;
+        reader.readAsText(file); event.target.value = null; // Permette di ricaricare lo stesso file
     });
 
     // Mappa con AI
     mapWithAiButton.addEventListener('click', async () => {
-        if (aiConfig.model === 'none' || !aiConfig.apiKey) { showStatus('Configura AI (modello e API Key).', 'warning', 7000); aiConfigSection?.classList.add('open'); aiConfigSection?.scrollIntoViewIfNeeded(); return; }
+        if (aiConfig.model === 'none' || !aiConfig.apiKey) { showStatus('Configura AI (modello e API Key).', 'warning', 7000); aiConfigSection?.classList.add('open'); saveSessionState(); aiConfigSection?.scrollIntoViewIfNeeded(); return; }
         if (!currentHtmlContent || currentHtmlContent.trim() === '') { showStatus('Estrai prima un form HTML.', 'warning'); return; }
-        const inputJsonString = dataInput.value.trim(); if (!inputJsonString) { showStatus('Carica o incolla i dati JSON.', 'warning'); dataInput.focus(); return; }
-        try { const p = JSON.parse(inputJsonString); if (!Array.isArray(p)) throw new Error("Input non è array."); } catch (error) { showStatus(`JSON Input non valido: ${error.message}`, 'error', 7000); dataInput.focus(); return; }
-        showStatus(`Invio dati a ${aiConfig.model}...`, 'info', 0); aiOutputContainer.classList.add('hidden'); aiOutputTextarea.value = ''; assignAiValuesButton.disabled = true; mapWithAiButton.disabled = true;
+        const inputJsonString = dataInput.value.trim(); if (!inputJsonString) { showStatus('Carica o incolla i dati JSON per il mapping.', 'warning'); dataInput.focus(); return; }
+        try { const p = JSON.parse(inputJsonString); if (!Array.isArray(p) && typeof p !== 'object') throw new Error("Input non è JSON valido (array o oggetto)."); } // Leggermente più permissivo per l'input AI
+        catch (error) { showStatus(`JSON Input non valido per AI: ${error.message}`, 'error', 7000); dataInput.focus(); return; }
+
+        showStatus(`Invio dati a ${aiConfig.model}...`, 'info', 0);
+        aiOutputContainer.classList.add('hidden'); aiOutputTextarea.value = ''; assignAiValuesButton.disabled = true; mapWithAiButton.disabled = true;
+        saveSessionState(); // Salva lo stato prima della chiamata AI
+
         try {
-            const prompt = createMappingPrompt(currentHtmlContent, inputJsonString); // Uses the defined function
+            const prompt = createMappingPrompt(currentHtmlContent, inputJsonString);
             let llmResponseString = ''; const selectedModel = aiConfig.model; const apiKey = aiConfig.apiKey; console.log(`Chiamata a ${selectedModel}.`);
             if (selectedModel.startsWith('gemini-') || selectedModel.startsWith('gemma-')) { llmResponseString = await callGoogleApi(selectedModel, prompt, apiKey); }
             else if (selectedModel.startsWith('openai-')) { const openAiModelName = selectedModel.substring('openai-'.length); llmResponseString = await callOpenAiApi(openAiModelName, prompt, apiKey); }
             else { throw new Error('Modello AI non supportato.'); }
             console.log(`Risposta grezza da ${selectedModel}.`);
-            const suggestedMappingJson = extractJsonFromString(llmResponseString); if (!suggestedMappingJson) { throw new Error(`AI (${selectedModel}) no JSON valido.`); }
-            if (!Array.isArray(suggestedMappingJson)) { throw new Error(`Output AI (${selectedModel}) non array.`); } const isValidFormat = suggestedMappingJson.every(item => typeof item === 'object' && item !== null && 'id' in item && typeof item.id === 'string' && 'valore' in item ); if (!isValidFormat) { throw new Error(`Formato oggetti AI (${selectedModel}) errato.`); }
-            aiOutputTextarea.value = JSON.stringify(suggestedMappingJson, null, 2); aiOutputContainer.classList.remove('hidden'); assignAiValuesButton.disabled = false; showStatus(`Mapping da ${selectedModel} completato.`, 'success'); aiOutputContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); saveSessionState(); // Save state after successful mapping
-        } catch (error) { console.error(`Errore mapping AI (${aiConfig.model}):`, error); showStatus(`Errore Mapping AI (${aiConfig.model}): ${error.message}`, 'error', 10000); aiOutputContainer.classList.add('hidden'); aiOutputTextarea.value = ''; assignAiValuesButton.disabled = true; } finally { mapWithAiButton.disabled = false; }
+            const suggestedMappingJson = extractJsonFromString(llmResponseString);
+            if (!suggestedMappingJson) { throw new Error(`L'AI (${selectedModel}) non ha restituito un JSON valido.`); }
+            if (!Array.isArray(suggestedMappingJson)) { throw new Error(`L'output dell'AI (${selectedModel}) non è un array JSON come richiesto.`); }
+            const isValidFormat = suggestedMappingJson.every(item => typeof item === 'object' && item !== null && 'id' in item && typeof item.id === 'string' && 'valore' in item );
+            if (!isValidFormat) { throw new Error(`Gli oggetti nell'array JSON dell'AI (${selectedModel}) non hanno il formato richiesto {id: string, valore: any}.`); }
+
+            aiOutputTextarea.value = JSON.stringify(suggestedMappingJson, null, 2);
+            aiOutputContainer.classList.remove('hidden');
+            assignAiValuesButton.disabled = false;
+            showStatus(`Mapping da ${selectedModel} completato. Verifica il JSON suggerito.`, 'success');
+            aiOutputContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            saveSessionState(); // Salva stato dopo mapping riuscito
+        } catch (error) {
+            console.error(`Errore mapping AI (${aiConfig.model}):`, error);
+            showStatus(`Errore Mapping AI (${aiConfig.model}): ${error.message}`, 'error', 10000);
+            // Non nascondere aiOutputContainer qui, l'utente potrebbe voler vedere l'errore o un output parziale
+            // aiOutputContainer.classList.add('hidden');
+            aiOutputTextarea.value = `Errore: ${error.message}\n\nRisposta (se disponibile):\n${llmResponseString || 'Nessuna risposta ricevuta.'}`; // Mostra l'errore nella textarea
+            assignAiValuesButton.disabled = true;
+            saveSessionState(); // Salva lo stato di errore
+        } finally {
+            mapWithAiButton.disabled = false;
+            saveSessionState(); // Salva lo stato finale del bottone
+        }
     });
 
     // Assegna Valori (da JSON Input)
     assignValuesButton.addEventListener('click', async () => {
         const jsonDataString = dataInput.value.trim();
-        if (!jsonDataString) { showStatus('Area dati JSON Input vuota.', 'warning'); return; }
-        let parsedData;
-        try { parsedData = JSON.parse(jsonDataString); }
-        catch (error) { showStatus(`Errore parsing JSON Input: ${error.message}`, 'error', 7000); return; }
-        await assignValuesToPage(parsedData); // Usa la funzione helper
+        if (!jsonDataString) {
+            showStatus('Area dati JSON Input vuota. Carica o incolla dati.', 'warning');
+            return;
+        }
+        let parsedJsonInput;
+        try {
+            parsedJsonInput = JSON.parse(jsonDataString);
+        } catch (error) {
+            showStatus(`Errore parsing JSON Input: ${error.message}`, 'error', 7000);
+            return;
+        }
+
+        // *** ESEGUI PREPROCESSING QUI ***
+        const processedData = preprocessJsonForAssignment(parsedJsonInput);
+
+        if (processedData.length === 0) {
+            showStatus('Nessuna coppia id/valore estraibile trovata nel JSON fornito con la struttura attesa.', 'warning', 7000);
+            return;
+        }
+        await assignValuesToPage(processedData); // Usa i dati pre-processati
     });
 
     // Assegna Valori (da Suggerimento AI)
     assignAiValuesButton.addEventListener('click', async () => {
         const aiJsonString = aiOutputTextarea.value.trim();
-        if (!aiJsonString) { showStatus('Nessun mapping AI da assegnare.', 'warning'); return; }
+        if (!aiJsonString) {
+            showStatus('Nessun mapping JSON suggerito dall\'AI da assegnare.', 'warning');
+            return;
+        }
         let parsedAiData;
-        try { parsedAiData = JSON.parse(aiJsonString); }
-        catch (error) { showStatus(`Errore parsing JSON AI: ${error.message}`, 'error', 7000); return; }
-        await assignValuesToPage(parsedAiData); // Chiama la funzione definita
+        try {
+            parsedAiData = JSON.parse(aiJsonString); // L'output AI è atteso già nel formato corretto
+        } catch (error) {
+            showStatus(`Errore parsing JSON suggerito dall'AI: ${error.message}`, 'error', 7000);
+            return;
+        }
+        // NESSUN PREPROCESSING QUI per l'output AI
+        await assignValuesToPage(parsedAiData);
     });
 
     // Copia HTML
-    copyButton.addEventListener('click', () => { const isSourceView = !htmlSourceTextarea.classList.contains('hidden'); const contentToCopy = isSourceView ? htmlSourceTextarea.value : formatHtmlForTextarea(currentHtmlContent || ''); if (contentToCopy && !copyButton.disabled) { navigator.clipboard.writeText(contentToCopy).then(() => showStatus('HTML copiato!', 'success')).catch(err => { showStatus('Errore copia.', 'error'); console.error('Errore copia:', err); try { const ta = document.createElement('textarea'); ta.value = contentToCopy; ta.style.position = 'fixed'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showStatus('HTML copiato (fallback)!', 'success'); } catch (e) { showStatus('Copia fallita.', 'error'); } }); } else { showStatus('Nessun HTML da copiare.', 'info'); } });
+    copyButton.addEventListener('click', () => {
+        const isSourceView = !htmlSourceTextarea.classList.contains('hidden');
+        const contentToCopy = isSourceView ? htmlSourceTextarea.value : formatHtmlForTextarea(currentHtmlContent || '');
+        if (contentToCopy && !copyButton.disabled) {
+            navigator.clipboard.writeText(contentToCopy)
+                .then(() => showStatus('HTML copiato negli appunti!', 'success'))
+                .catch(err => {
+                    showStatus('Errore durante la copia dell\'HTML.', 'error');
+                    console.error('Errore copia HTML:', err);
+                    try {
+                        const ta = document.createElement('textarea');
+                        ta.value = contentToCopy;
+                        ta.style.position = 'fixed'; document.body.appendChild(ta);
+                        ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+                        showStatus('HTML copiato (fallback)!', 'success');
+                    } catch (e) { showStatus('Copia fallita.', 'error'); }
+                });
+        } else {
+            showStatus('Nessun HTML da copiare.', 'info');
+        }
+    });
 
     // Salva HTML
-    saveButton.addEventListener('click', () => { const isSourceView = !htmlSourceTextarea.classList.contains('hidden'); const contentToSave = isSourceView ? htmlSourceTextarea.value : formatHtmlForTextarea(currentHtmlContent || ''); if (contentToSave && !saveButton.disabled) { const pageName = pageNameInput.value.trim() || 'extracted_forms'; const filename = sanitizeFilenameForSave(pageName) + '.html'; const fileContent = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${pageName.replace(/</g, "<").replace(/>/g, ">")} - Forms Estratti</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.6;padding:20px;margin:0;background-color:#f4f4f4;color:#333}.form-container-wrapper>h3{color:#3498db;margin-top:20px;border-bottom:1px solid #eee;padding-bottom:8px;margin-bottom:15px}.form-container-wrapper>h3:first-of-type{margin-top:0}.form-container-wrapper>form{background-color:#fff;border:1px solid #ddd;border-radius:8px;padding:20px;margin-bottom:25px;box-shadow:0 2px 5px rgba(0,0,0,.1)}h2.main-title{text-align:center;color:#2c3e50;border-bottom:2px solid #3498db;padding-bottom:10px;margin-bottom:30px}label{display:block;margin-bottom:5px;font-weight:bold;color:#555}input[type=text],input[type=email],input[type=password],input[type=url],input[type=tel],input[type=number],input[type=date],input[type=time],input[type=search],textarea,select{display:block;width:95%;max-width:500px;padding:10px;margin-bottom:15px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;font-size:1em}input[type=checkbox],input[type=radio]{margin-right:8px;vertical-align:middle;margin-bottom:10px}label>input[type=checkbox],label>input[type=radio]{margin-bottom:0;display:inline-block;width:auto}fieldset{border:1px solid #ddd;padding:15px;margin-bottom:20px;border-radius:4px}legend{font-weight:bold;color:#3498db;padding:0 10px;margin-left:5px}table{width:100%;border-collapse:collapse;margin-bottom:15px}th,td{border:1px solid #eee;padding:8px;text-align:left;vertical-align:top}th{background-color:#f0f0f0;font-weight:bold}hr{margin:30px 0;border:0;border-top:2px dashed #ccc}td div,td span,td p{margin-bottom:5px}label+input,label+select,label+textarea{margin-top:2px}</style></head><body><h2 class="main-title">${pageName.replace(/</g, "<").replace(/>/g, ">")} - Forms Estratti</h2><div class="form-container-wrapper">${contentToSave}</div></body></html>`; const blob = new Blob([fileContent], { type: 'text/html;charset=utf-8' }); const url = URL.createObjectURL(blob); chrome.downloads.download({ url: url, filename: filename, saveAs: true }, (downloadId) => { if (chrome.runtime.lastError) { console.error("Download failed:", chrome.runtime.lastError); showStatus(`Errore salvataggio: ${chrome.runtime.lastError.message}`, 'error'); try { const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); showStatus(`File "${filename}" pronto (fallback).`, 'warning', 7000); } catch(e) { showStatus('Salvataggio fallito (fallback).', 'error'); URL.revokeObjectURL(url); } } else if (downloadId) { showStatus(`Download "${filename}" avviato.`, 'success'); URL.revokeObjectURL(url); } else { showStatus(`Download "${filename}" non avviato.`, 'warning', 7000); URL.revokeObjectURL(url); } }); } else { showStatus('Nessun HTML da salvare.', 'info'); } });
+    saveButton.addEventListener('click', () => {
+        const isSourceView = !htmlSourceTextarea.classList.contains('hidden');
+        const contentToSave = isSourceView ? htmlSourceTextarea.value : formatHtmlForTextarea(currentHtmlContent || '');
+        if (contentToSave && !saveButton.disabled) {
+            const pageName = pageNameInput.value.trim() || 'extracted_forms';
+            const filename = sanitizeFilenameForSave(pageName) + '.html';
+            const fileContent = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${pageName.replace(/</g, "<").replace(/>/g, ">")} - Forms Estratti</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.6;padding:20px;margin:0;background-color:#f4f4f4;color:#333}.form-container-wrapper>h3{color:#3498db;margin-top:20px;border-bottom:1px solid #eee;padding-bottom:8px;margin-bottom:15px}.form-container-wrapper>h3:first-of-type{margin-top:0}.form-container-wrapper>form{background-color:#fff;border:1px solid #ddd;border-radius:8px;padding:20px;margin-bottom:25px;box-shadow:0 2px 5px rgba(0,0,0,.1)}h2.main-title{text-align:center;color:#2c3e50;border-bottom:2px solid #3498db;padding-bottom:10px;margin-bottom:30px}label{display:block;margin-bottom:5px;font-weight:bold;color:#555}input[type=text],input[type=email],input[type=password],input[type=url],input[type=tel],input[type=number],input[type=date],input[type=time],input[type=search],textarea,select{display:block;width:95%;max-width:500px;padding:10px;margin-bottom:15px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;font-size:1em}input[type=checkbox],input[type=radio]{margin-right:8px;vertical-align:middle;margin-bottom:10px}label>input[type=checkbox],label>input[type=radio]{margin-bottom:0;display:inline-block;width:auto}fieldset{border:1px solid #ddd;padding:15px;margin-bottom:20px;border-radius:4px}legend{font-weight:bold;color:#3498db;padding:0 10px;margin-left:5px}table{width:100%;border-collapse:collapse;margin-bottom:15px}th,td{border:1px solid #eee;padding:8px;text-align:left;vertical-align:top}th{background-color:#f0f0f0;font-weight:bold}hr{margin:30px 0;border:0;border-top:2px dashed #ccc}td div,td span,td p{margin-bottom:5px}label+input,label+select,label+textarea{margin-top:2px}</style></head><body><h2 class="main-title">${pageName.replace(/</g, "<").replace(/>/g, ">")} - Forms Estratti</h2><div class="form-container-wrapper">${contentToSave}</div></body></html>`;
+            const blob = new Blob([fileContent], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            chrome.downloads.download({ url: url, filename: filename, saveAs: true }, (downloadId) => {
+                if (chrome.runtime.lastError) {
+                    console.error("Download failed:", chrome.runtime.lastError);
+                    showStatus(`Errore salvataggio: ${chrome.runtime.lastError.message}`, 'error');
+                    try {
+                        const a = document.createElement('a'); a.href = url; a.download = filename;
+                        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                        showStatus(`File "${filename}" pronto (fallback).`, 'warning', 7000);
+                    } catch (e) {
+                        showStatus('Salvataggio fallito (fallback).', 'error');
+                        URL.revokeObjectURL(url);
+                    }
+                } else if (downloadId) {
+                    showStatus(`Download "${filename}" avviato.`, 'success');
+                    URL.revokeObjectURL(url);
+                } else {
+                    showStatus(`Download "${filename}" non avviato. Controlla impostazioni browser.`, 'warning', 7000);
+                    URL.revokeObjectURL(url);
+                }
+            });
+        } else {
+            showStatus('Nessun HTML da salvare.', 'info');
+        }
+    });
 
     // ===========================================
     // --- Inizializzazione ---
     // ===========================================
     setupCollapsibles();
     loadSessionState().then(() => {
-        loadAiConfig();
+        loadAiConfig(); // Carica config AI dopo lo stato sessione
     });
 
 }); // End DOMContentLoaded
