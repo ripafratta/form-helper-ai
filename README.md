@@ -60,7 +60,7 @@ I dati per la compilazione devono essere forniti come un **array di oggetti JSON
   { "id": "commenti", "valore": "Questo è un commento di prova su più righe." },
   { "id": "paese", "valore": "IT" } 
 ]
-
+```
 
 ## Note sul Formato Valore:
 
