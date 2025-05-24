@@ -1,6 +1,7 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // --- Elementi UI ---
     const extractFormsButton = document.getElementById('extractFormsButton');
+    const extractFormsWithAiButton = document.getElementById('extractFormsWithAiButton');
     const pageNameInput = document.getElementById('pageNameInput');
     const previewFrame = document.getElementById('previewFrame');
     const htmlSourceTextarea = document.getElementById('htmlSourceTextarea');
@@ -137,6 +138,169 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+
+    // funzione per creare il prompt AI (dal documento allegato):
+    function createFormExtractionPrompt(htmlSource, pageTitle) {
+        return `
+Analizza il seguente codice HTML di una pagina web e estrai tutte le form presenti, applicando la logica di inclusione/esclusione specificata. Associa ad ogni campo del form la relativa etichetta ricavandola dalla struttura del codice HTML di input oppure deducendola dal contesto. Restituisci HTML standard semplificato e formattato.
+
+**CODICE HTML DELLA PAGINA:**
+\`\`\`html
+${htmlSource}
+\`\`\`
+
+**TITOLO PAGINA:** ${pageTitle || 'Pagina senza titolo'}
+
+**ISTRUZIONI DETTAGLIATE:**
+
+## 1. IDENTIFICAZIONE FORM
+Identifica e estrai:
+- **Form Standard:** Tutti gli elementi \`<form>\` e il loro contenuto
+- **Form Logici:** Contenitori che funzionano come form anche senza tag \`<form>\`:
+  * Elementi con \`role="form"\` o \`role="search"\`
+  * Contenitori con almeno 2 campi input O 1 campo input + 1 button
+  * \`<fieldset>\` con elementi interattivi
+  * Sezioni con \`aria-label\` o \`aria-labelledby\` che contengono campi
+
+## 2. ELEMENTI DA INCLUDERE
+**Campi Input Validi:**
+- \`<input>\` (ESCLUSI SOLO: type="submit|reset|image|button")
+- \`<input type="hidden">\` **DEVE ESSERE INCLUSO** (ignora attributo hidden)
+- \`<textarea>\`
+- \`<select>\` e \`<option>\`
+- \`<fieldset>\` e \`<legend>\`
+- Elementi con ruoli: \`textbox\`, \`combobox\`, \`listbox\`, \`checkbox\`, \`radio\`, \`switch\`, \`slider\`
+
+**Visibilità:**
+- **INCLUDI elementi nascosti** (hidden, display:none, visibility:hidden)
+- **INCLUDI sezioni collassate** o non visibili
+- **IGNORA SOLO stato visivo**, estrai tutto il contenuto semantico
+
+## 3. ELEMENTI DA ESCLUDERE
+**Controlli Esclusi:**
+- Tutti i \`<button>\` (qualsiasi tipo)
+- \`<input type="button|submit|reset|image">\`
+- **\`<input readonly>\` e \`<textarea readonly>\`** - ESCLUDI SEMPRE
+- Elementi con ruoli: \`button\`, \`spinbutton\`, \`searchbox\`
+
+**Elementi Non Rilevanti:**
+- \`<script>\`, \`<style>\`, \`<head>\`, \`<meta>\`, \`<link>\`
+- Navigazione: \`<nav>\`, \`<header>\`, \`<footer>\`
+
+## 4. ASSOCIAZIONE ETICHETTE (PRIORITA' GERARCHICA)
+Per ogni campo input, cerca l'etichetta con questa priorità:
+
+### Livello 1 - Associazione Diretta:
+\`\`\`html
+<label for="campo1">Nome</label>
+<input id="campo1" type="text">
+\`\`\`
+
+### Livello 2 - ARIA Labelledby:
+\`\`\`html
+<div id="etichetta">Email</div>
+<input aria-labelledby="etichetta" type="email">
+\`\`\`
+
+### Livello 3 - ARIA Label:
+\`\`\`html
+<input aria-label="Telefono" type="tel">
+\`\`\`
+
+### Livello 4 - Componente Wrapper:
+\`\`\`html
+<p-calendar aria-label="Data">
+  <input id="data" type="tel">
+</p-calendar>
+\`\`\`
+Pattern: \`p-\`, \`app-\`, \`sdk-\`, \`mat-\`, \`ion-\`, \`ng-\`, \`v-\`, \`react-\`
+
+### Livello 5 - Label Wrappante:
+\`\`\`html
+<label>Nome <input type="text"></label>
+\`\`\`
+
+Se non trovi l'etichetta in nessuno di modi sopra indicati cerca di dedurla dal contesto.
+
+## 5. ESTRAZIONE TESTO ETICHETTE
+- **Rimuovi elementi interattivi** annidati (input, button, select)
+- **Ignora commenti HTML/Angular** (\`<!---->)\`
+- **Usa fallback al title** se il testo non è disponibile
+- **Normalizza**: rimuovi spazi eccessivi e caratteri finali (\`:\`, \`-\`)
+
+## 6. ATTRIBUTI ESSENZIALI DA PRESERVARE
+- Identificatori: \`id\`, \`name\`
+- Tipi e valori: \`type\`, \`value\`, \`placeholder\`
+- Stato: \`required\`, \`checked\`, \`selected\`, \`disabled\` (NON readonly)
+- Associazioni: \`for\`, \`aria-label\`, \`aria-labelledby\`
+- Vincoli: \`min\`, \`max\`, \`step\`, \`pattern\`, \`multiple\`
+- Accessibilità: \`title\`, \`role\`
+
+## 7. FORMAT OUTPUT HTML RICHIESTO
+Restituisci HTML standard semplificato seguendo questo formato:
+
+\`\`\`html
+<h3>Nome Form 1 (Semplificato)</h3>
+<form id="form-id-se-presente" action="action-se-presente" method="method-se-presente">
+  <label for="campo1">Etichetta Campo 1</label>
+  <input type="text" id="campo1" name="name-se-presente" placeholder="placeholder-se-presente" required>
+  
+  <label for="campo2">Etichetta Campo 2</label>
+  <input type="email" id="campo2" name="email" title="title-se-presente">
+  
+  <fieldset>
+    <legend>Sezione Dati</legend>
+    <label for="campo3">Campo Nascosto</label>
+    <input type="hidden" id="campo3" name="hidden_field" value="valore">
+    
+    <label for="campo4">Selezione</label>
+    <select id="campo4" name="country">
+      <option value="IT">Italia</option>
+      <option value="FR">Francia</option>
+    </select>
+  </fieldset>
+  
+  <label for="campo5">Commenti</label>
+  <textarea id="campo5" name="comments" placeholder="Inserisci commenti"></textarea>
+</form>
+
+<hr style="margin: 20px 0; border: 1px dashed #ccc;">
+
+<h3>Nome Form 2 (Logico)</h3>
+<form data-logical-form="true" id="form-log-generato">
+  <!-- Altri campi estratti -->
+</form>
+\`\`\`
+
+## 8. REGOLE DI FORMATTAZIONE HTML
+- **Struttura Pulita:** Indentazione corretta con 2 spazi
+- **Un elemento per riga:** Ogni tag su riga separata
+- **Label prima del campo:** Sempre \`<label>\` seguito dal relativo \`<input>\`
+- **Separatori form:** \`<hr>\` tra form diverse
+- **Titoli descrittivi:** \`<h3>Nome Form (Tipo)</h3>\` per ogni form
+- **Attributi ordinati:** id, name, type, value, placeholder, altri attributi
+- **Chiusura corretta:** Tutti i tag correttamente chiusi
+
+## 9. GESTIONE CASI SPECIALI
+- **Form senza ID:** Genera ID univoco \`form-std-random\` o \`form-log-random\`
+- **Campi senza etichetta:** Crea \`<label>\` basata su placeholder, name, o title
+- **Elementi duplicati:** Mantieni tutti, non filtrare duplicati
+- **Nesting complesso:** Semplifica struttura preservando semantica
+- **Framework components:** Estrai l'input interno, associa etichetta del componente
+
+## 10. REGOLE AGGIUNTIVE
+- **Non inventare ID per i campi**: usa solo ID realmente presenti nell'HTML
+- **Mantieni tipi originali**: mai trasformare input in select o viceversa
+- **Preserva associazioni**: mantieni tutti gli attributi \`for\` delle label
+- **Gestisci framework**: riconosci componenti Angular/React/Vue
+- **Priorità contenuto**: concentrati su form di compilazione dati significativi
+- **Ignora visibilità CSS**: estrai anche da \`display:none\`, \`visibility:hidden\`
+- **Escludi readonly**: mai includere campi readonly o disabled per modifica
+
+**IMPORTANTE:** Analizza l'HTML fornito e restituisci SOLO il codice HTML semplificato e formattato, senza commenti aggiuntivi, spiegazioni o wrapper markdown. Inizia direttamente con \`<h3>\` del primo form trovato.
+`;
+    }
+
     function createMappingPrompt(htmlForm, inputJsonString) {
         let cleanedJsonString = inputJsonString;
         try {
@@ -227,6 +391,37 @@ Genera ora l'array JSON di mapping.`;
             showStatus(`Errore script assegnazione: ${error.message}`, 'error');
         }
     }
+
+
+    // funzione per estrarre DOM HTML dalla pagina:
+    async function extractPageHTML() {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!tab || !tab.id) {
+            throw new Error('Scheda attiva non trovata.');
+        }
+
+        try {
+            const results = await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: () => {
+                    // Estrai tutto il DOM della pagina
+                    return {
+                        html: document.documentElement.outerHTML,
+                        title: document.title
+                    };
+                }
+            });
+
+            if (results && results[0] && results[0].result) {
+                return results[0].result;
+            } else {
+                throw new Error('Impossibile estrarre HTML dalla pagina.');
+            }
+        } catch (error) {
+            throw new Error(`Errore nell'estrazione HTML: ${error.message}`);
+        }
+    }
+
 
     // ===========================================
     // --- NUOVA FUNZIONE DI PREPROCESSING JSON ---
@@ -363,6 +558,7 @@ Genera ora l'array JSON di mapping.`;
         try {
             const result = await chrome.storage.session.get(SESSION_STATE_KEY);
             const savedState = result[SESSION_STATE_KEY];
+            extractFormsWithAiButton.disabled = false;
             if (savedState) {
                 console.log('Loading session state:', savedState);
                 pageNameInput.value = savedState.pageName || '';
@@ -458,7 +654,7 @@ Genera ora l'array JSON di mapping.`;
             // Imposta stato iniziale AI Config solo se non già caricato da sessione
             // E se effettivamente serve configurazione (nessuna chiave o modello salvato)
             if (!sessionResult[SESSION_STATE_KEY]?.hasOwnProperty('aiConfigOpen')) {
-                 aiConfigSection?.classList.toggle('open', needsConfig);
+                aiConfigSection?.classList.toggle('open', needsConfig);
             }
 
         } catch (error) {
@@ -509,7 +705,7 @@ Genera ora l'array JSON di mapping.`;
 
     // Gestione Cambio View Mode
     viewModeRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
+        radio.addEventListener('change', function () {
             applySourceChangesButton.classList.toggle('hidden', this.value === 'preview');
             previewFrame.classList.toggle('hidden', this.value === 'source');
             htmlSourceTextarea.classList.toggle('hidden', this.value === 'preview');
@@ -563,7 +759,7 @@ Genera ora l'array JSON di mapping.`;
                 // htmlSourceTextarea.value = formatHtmlForTextarea(currentHtmlContent); // Prepara per vista sorgente
 
                 if (currentHtmlContent.includes("Nessun tag <form>")) { showStatus('Nessun form trovato.', 'info'); }
-                else if (currentHtmlContent.trim() === '' || (currentHtmlContent.includes("<!-- Form originale") && !currentHtmlContent.includes("<form")) ) { showStatus('Nessun contenuto estraibile.', 'info'); previewFrame.srcdoc = '<p>Nessun contenuto.</p>';}
+                else if (currentHtmlContent.trim() === '' || (currentHtmlContent.includes("<!-- Form originale") && !currentHtmlContent.includes("<form"))) { showStatus('Nessun contenuto estraibile.', 'info'); previewFrame.srcdoc = '<p>Nessun contenuto.</p>'; }
                 else { showStatus('Estrazione completata!', 'success'); copyButton.disabled = false; saveButton.disabled = false; }
                 saveSessionState(); // Salva stato dopo estrazione riuscita
             } else {
@@ -574,6 +770,119 @@ Genera ora l'array JSON di mapping.`;
         } catch (error) {
             showStatus(`Errore estrazione (script): ${error.message}`, 'error'); previewFrame.srcdoc = '<p>Errore script</p>';
             currentHtmlContent = `<p style="color:red">Errore script estrazione: ${error.message}</p>`;
+            saveSessionState();
+        }
+    });
+
+    // Estrazione Form con il supporto dell'AI
+    extractFormsWithAiButton.addEventListener('click', async () => {
+        // Verifica configurazione AI
+        if (aiConfig.model === 'none' || !aiConfig.apiKey) {
+            showStatus('Configura AI (modello e API Key) prima di utilizzare l\'estrazione con AI.', 'warning', 7000);
+            aiConfigSection?.classList.add('open');
+            saveSessionState();
+            aiConfigSection?.scrollIntoViewIfNeeded();
+            return;
+        }
+
+        showStatus('Estrazione HTML dalla pagina...', 'info', 0);
+
+        // Reset dello stato
+        currentHtmlContent = null;
+        previewFrame.srcdoc = '<p>Estrazione con AI in corso...</p>';
+        htmlSourceTextarea.value = '';
+        copyButton.disabled = true;
+        saveButton.disabled = true;
+        aiOutputContainer.classList.add('hidden');
+        aiOutputTextarea.value = '';
+        assignAiValuesButton.disabled = true;
+
+        // Forza la vista anteprima
+        document.querySelector('input[name="viewMode"][value="preview"]').checked = true;
+        previewFrame.classList.remove('hidden');
+        htmlSourceTextarea.classList.add('hidden');
+        applySourceChangesButton.classList.add('hidden');
+
+        try {
+            // 1. Estrai HTML dalla pagina
+            const pageData = await extractPageHTML();
+
+            // 2. Precompila il nome pagina
+            if (!pageNameInput.value && pageData.title) {
+                pageNameInput.value = sanitizeFilenameForSave(pageData.title);
+            } else if (!pageNameInput.value) {
+                pageNameInput.value = 'pagina_estratta_ai';
+            }
+
+            saveSessionState();
+
+            showStatus(`Invio HTML a ${aiConfig.model} per estrazione form...`, 'info', 0);
+            extractFormsWithAiButton.disabled = true;
+
+            // 3. Crea il prompt con l'HTML della pagina
+            const prompt = createFormExtractionPrompt(pageData.html, pageData.title);
+
+            // 4. Chiama l'API AI
+            let aiResponseHtml = '';
+            const selectedModel = aiConfig.model;
+            const apiKey = aiConfig.apiKey;
+
+            console.log(`Chiamata AI per estrazione form: ${selectedModel}`);
+
+            if (selectedModel.startsWith('gemini-') || selectedModel.startsWith('gemma-')) {
+                aiResponseHtml = await callGoogleApi(selectedModel, prompt, apiKey);
+            } else if (selectedModel.startsWith('openai-')) {
+                const openAiModelName = selectedModel.substring('openai-'.length);
+                aiResponseHtml = await callOpenAiApi(openAiModelName, prompt, apiKey);
+            } else {
+                throw new Error('Modello AI non supportato.');
+            }
+
+            console.log(`Risposta AI ricevuta da ${selectedModel}`);
+
+            // 5. Pulisci la risposta AI (rimuovi eventuali wrapper markdown)
+            let cleanedHtml = aiResponseHtml.trim();
+
+            // Rimuovi wrapper markdown se presenti
+            if (cleanedHtml.startsWith('```html')) {
+                cleanedHtml = cleanedHtml.replace(/^```html\s*/, '').replace(/\s*```$/, '');
+            } else if (cleanedHtml.startsWith('```')) {
+                cleanedHtml = cleanedHtml.replace(/^```\s*/, '').replace(/\s*```$/, '');
+            }
+
+            // 6. Verifica che la risposta contenga HTML valido
+            if (!cleanedHtml.includes('<') || !cleanedHtml.includes('>')) {
+                throw new Error('La risposta AI non contiene HTML valido.');
+            }
+
+            // 7. Aggiorna lo stato con il risultato
+            currentHtmlContent = cleanedHtml;
+            previewFrame.srcdoc = currentHtmlContent;
+
+            // 8. Abilita i pulsanti di azione
+            copyButton.disabled = false;
+            saveButton.disabled = false;
+
+            if (currentHtmlContent.includes("Nessun")) {
+                showStatus('Nessun form trovato dall\'AI.', 'info');
+            } else if (currentHtmlContent.trim() === '') {
+                showStatus('L\'AI non ha restituito contenuto valido.', 'warning');
+            } else {
+                showStatus(`Estrazione AI completata con ${selectedModel}! Form estratti e associati alle etichette.`, 'success');
+            }
+
+            saveSessionState();
+
+        } catch (error) {
+            console.error(`Errore estrazione AI (${aiConfig.model}):`, error);
+            showStatus(`Errore Estrazione AI (${aiConfig.model}): ${error.message}`, 'error', 10000);
+
+            previewFrame.srcdoc = `<p style="color:red; padding:20px;">Errore estrazione AI: ${error.message}</p>`;
+            currentHtmlContent = `<p style="color:red;">Errore estrazione AI: ${error.message}</p>`;
+            saveSessionState();
+
+        } finally {
+            extractFormsWithAiButton.disabled = false;
             saveSessionState();
         }
     });
@@ -623,7 +932,7 @@ Genera ora l'array JSON di mapping.`;
             const suggestedMappingJson = extractJsonFromString(llmResponseString);
             if (!suggestedMappingJson) { throw new Error(`L'AI (${selectedModel}) non ha restituito un JSON valido.`); }
             if (!Array.isArray(suggestedMappingJson)) { throw new Error(`L'output dell'AI (${selectedModel}) non è un array JSON come richiesto.`); }
-            const isValidFormat = suggestedMappingJson.every(item => typeof item === 'object' && item !== null && 'id' in item && typeof item.id === 'string' && 'valore' in item );
+            const isValidFormat = suggestedMappingJson.every(item => typeof item === 'object' && item !== null && 'id' in item && typeof item.id === 'string' && 'valore' in item);
             if (!isValidFormat) { throw new Error(`Gli oggetti nell'array JSON dell'AI (${selectedModel}) non hanno il formato richiesto {id: string, valore: any}.`); }
 
             aiOutputTextarea.value = JSON.stringify(suggestedMappingJson, null, 2);

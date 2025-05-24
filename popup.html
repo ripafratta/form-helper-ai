@@ -1,39 +1,54 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>Form Helper AI (Session)</title>
   <style>
     /* --- General Styles --- */
-    html, body {
+    html,
+    body {
       margin: 0;
       padding: 0;
       /* Imposta altezza di default più grande */
-      height: 900px; /* <-- NUOVO VALORE */
-      width: 700px; /* Larghezza fissa del popup */
-      overflow: hidden; /* Impedisce lo scroll del body stesso */
+      height: 900px;
+      /* <-- NUOVO VALORE */
+      width: 700px;
+      /* Larghezza fissa del popup */
+      overflow: hidden;
+      /* Impedisce lo scroll del body stesso */
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       font-size: 14px;
       color: #333;
-      background-color: #f0f2f5; /* Sfondo leggermente diverso */
+      background-color: #f0f2f5;
+      /* Sfondo leggermente diverso */
     }
+
     body {
       /* Rimosso display: flex e height: calc() */
       padding: 10px;
-      box-sizing: border-box; /* Include padding nell'altezza totale */
+      box-sizing: border-box;
+      /* Include padding nell'altezza totale */
       /* L'altezza è già definita da html, body */
     }
+
     /* Contenitore principale per lo scrolling */
     #mainContentContainer {
-        /* Calcola altezza basata sulla nuova altezza fissa del body */
-        height: calc(900px - 50px - 20px); /* Altezza body - status bar - padding body */ /* <-- NUOVO CALCOLO */
-        /* Alternativa più semplice se il padding del body è incluso nell'altezza: */
-        /* height: calc(100% - 50px); */ /* Altezza body (900px) - status bar */
+      /* Calcola altezza basata sulla nuova altezza fissa del body */
+      height: calc(900px - 50px - 20px);
+      /* Altezza body - status bar - padding body */
+      /* <-- NUOVO CALCOLO */
+      /* Alternativa più semplice se il padding del body è incluso nell'altezza: */
+      /* height: calc(100% - 50px); */
+      /* Altezza body (900px) - status bar */
 
-        overflow-y: auto; /* Abilita lo scroll verticale SOLO qui */
-        overflow-x: hidden;
-        padding-bottom: 10px; /* Spazio alla fine */
-        box-sizing: border-box;
+      overflow-y: auto;
+      /* Abilita lo scroll verticale SOLO qui */
+      overflow-x: hidden;
+      padding-bottom: 10px;
+      /* Spazio alla fine */
+      box-sizing: border-box;
     }
+
     h3 {
       margin-top: 0;
       color: #2c3e50;
@@ -42,13 +57,17 @@
       padding-bottom: 8px;
       margin-bottom: 12px;
     }
+
     label {
       display: block;
       margin-bottom: 5px;
       font-weight: 600;
       color: #444;
     }
-    input[type="text"], input[type="password"], select {
+
+    input[type="text"],
+    input[type="password"],
+    select {
       width: calc(100% - 18px);
       padding: 8px;
       margin-bottom: 10px;
@@ -57,6 +76,7 @@
       font-family: inherit;
       box-sizing: border-box;
     }
+
     textarea {
       width: 100%;
       max-height: 450px;
@@ -71,95 +91,244 @@
       resize: vertical;
       margin-bottom: 10px;
     }
+
     #previewFrame {
       width: 100%;
-      height: 220px; /* Altezza ridotta */
+      height: 220px;
+      /* Altezza ridotta */
       border: 1px solid #ddd;
       border-radius: 4px;
       background-color: white;
     }
+
     #htmlSourceTextarea {
-      min-height: 220px; /* Match preview frame */
+      min-height: 220px;
+      /* Match preview frame */
       max-height: 400px;
     }
-    #dataInput { min-height: 220px; max-height: 400px; }
-    #aiOutputTextarea { min-height: 220px; max-height: 400px; background-color: #f0f0f0; }
+
+    #dataInput {
+      min-height: 220px;
+      max-height: 400px;
+    }
+
+    #aiOutputTextarea {
+      min-height: 220px;
+      max-height: 400px;
+      background-color: #f0f0f0;
+    }
 
     /* --- Buttons (Stili Ripristinati) --- */
     .btn {
-      background-color: #3498db; color: white; border: none;
-      padding: 9px 15px; border-radius: 4px; cursor: pointer; font-weight: 500;
-      margin-right: 8px; margin-bottom: 8px; /* Margine inferiore per wrap */
-      transition: background-color 0.2s; display: inline-flex;
-      align-items: center; vertical-align: middle;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 9px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      margin-right: 8px;
+      margin-bottom: 8px;
+      /* Margine inferiore per wrap */
+      transition: background-color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      vertical-align: middle;
     }
-    .btn:hover { background-color: #2980b9; }
+
+    .btn:hover {
+      background-color: #2980b9;
+    }
+
     /* Ripristinati colori specifici */
-    .btn-primary { background-color: #3498db; }
-    .btn-success { background-color: #2ecc71; }
-    .btn-secondary { background-color: #95a5a6; }
-    .btn-warning { background-color: #f39c12; }
-    .btn-info { background-color: #3498db; opacity: 0.9; } /* Mantenuto per AI */
-    .btn:disabled { background-color: #bdc3c7; cursor: not-allowed; opacity: 0.7; }
-    .btn-icon { margin-right: 6px; }
+    .btn-primary {
+      background-color: #3498db;
+    }
+
+    .btn-success {
+      background-color: #2ecc71;
+    }
+
+    .btn-secondary {
+      background-color: #95a5a6;
+    }
+
+    .btn-warning {
+      background-color: #f39c12;
+    }
+
+    .btn-info {
+      background-color: #3498db;
+      opacity: 0.9;
+    }
+
+    /* Mantenuto per AI */
+    .btn:disabled {
+      background-color: #bdc3c7;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .btn-icon {
+      margin-right: 6px;
+    }
 
     /* --- Status Message (Stili Ripristinati, non fisso) --- */
     #statusMessage {
-      margin-top: 10px; /* Spazio sopra */
-      font-style: italic; color: #555;
-      min-height: 1.2em; padding: 8px 10px; border-radius: 4px;
+      margin-top: 10px;
+      /* Spazio sopra */
+      font-style: italic;
+      color: #555;
+      min-height: 1.2em;
+      padding: 8px 10px;
+      border-radius: 4px;
       line-height: 1.4;
-      background-color: #e9e9e9; /* Sfondo di default */
+      background-color: #e9e9e9;
+      /* Sfondo di default */
       border-top: 1px solid #ccc;
       /* Niente position fixed */
     }
+
     /* Ripristinati sfondi specifici */
-    .status-info { background-color: #e8f4fd; border-left: 4px solid #3498db; color: #333; }
-    .status-success { background-color: #e8fcf1; border-left: 4px solid #2ecc71; color: #333; }
-    .status-error { background-color: #fdebeb; border-left: 4px solid #e74c3c; color: #c0392b; font-weight: 500; }
-    .status-warning { background-color: #fef9e7; border-left: 4px solid #f39c12; color: #b7791f; }
+    .status-info {
+      background-color: #e8f4fd;
+      border-left: 4px solid #3498db;
+      color: #333;
+    }
+
+    .status-success {
+      background-color: #e8fcf1;
+      border-left: 4px solid #2ecc71;
+      color: #333;
+    }
+
+    .status-error {
+      background-color: #fdebeb;
+      border-left: 4px solid #e74c3c;
+      color: #c0392b;
+      font-weight: 500;
+    }
+
+    .status-warning {
+      background-color: #fef9e7;
+      border-left: 4px solid #f39c12;
+      color: #b7791f;
+    }
 
     /* --- Collapsible Sections (Stili Ripristinati/Confermati) --- */
     .collapsible-section {
-      background-color: #ffffff; border: 1px solid #d1d9e6; border-radius: 5px;
-      margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;
+      background-color: #ffffff;
+      border: 1px solid #d1d9e6;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
     }
+
     .collapsible-toggle {
-      cursor: pointer; width: 100%; text-align: left; background: #e9edf1;
-      border: none; border-bottom: 1px solid #d1d9e6; padding: 10px 15px;
-      font-weight: bold; font-size: 1.05em; margin: 0; border-radius: 0;
-      display: flex; justify-content: space-between; align-items: center;
-      transition: background-color 0.2s; color: #333;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      background: #e9edf1;
+      border: none;
+      border-bottom: 1px solid #d1d9e6;
+      padding: 10px 15px;
+      font-weight: bold;
+      font-size: 1.05em;
+      margin: 0;
+      border-radius: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color 0.2s;
+      color: #333;
     }
-    .collapsible-toggle:hover { background-color: #dde3ea; }
+
+    .collapsible-toggle:hover {
+      background-color: #dde3ea;
+    }
+
     .collapsible-toggle::after {
-      content: '\25BC'; /* Down arrow (Standard CSS Escape) */ 
-      font-family: 'Segoe UI Symbol', sans-serif; /* Aggiungi un font che sicuramente contiene il glifo */
+      content: '\25BC';
+      /* Down arrow (Standard CSS Escape) */
+      font-family: 'Segoe UI Symbol', sans-serif;
+      /* Aggiungi un font che sicuramente contiene il glifo */
       font-size: 0.8em;
       transition: transform 0.2s ease-in-out;
       margin-left: 5px;
     }
-    .collapsible-section.open > .collapsible-toggle::after { transform: rotate(180deg); }
-    .collapsible-content { padding: 15px; display: none; border-top: none; background-color: #fff; }
-    .collapsible-section.open > .collapsible-content { display: block; }
+
+    .collapsible-section.open>.collapsible-toggle::after {
+      transform: rotate(180deg);
+    }
+
+    .collapsible-content {
+      padding: 15px;
+      display: none;
+      border-top: none;
+      background-color: #fff;
+    }
+
+    .collapsible-section.open>.collapsible-content {
+      display: block;
+    }
 
     /* --- Specific Container Styles (Ripristinati/Confermati) --- */
     /* Questi div ora sono semplici contenitori dentro .collapsible-content */
-    #aiConfigContainer, #controls, #outputContainer, #actions, #dataContainer, #aiOutputContainer {
-        /* Rimosse regole che li trattavano come sezioni principali */
-         padding-top: 5px; /* Aggiunto un po' di spazio sopra se necessario */
+    #aiConfigContainer,
+    #controls,
+    #outputContainer,
+    #actions,
+    #dataContainer,
+    #aiOutputContainer {
+      /* Rimosse regole che li trattavano come sezioni principali */
+      padding-top: 5px;
+      /* Aggiunto un po' di spazio sopra se necessario */
     }
-     /* Mantenuti stili specifici interni */
-    .config-item { margin-bottom: 10px; }
-    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; }
-    .file-input-wrapper input[type=file] { position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-    .hidden { display: none !important; }
-    .view-toggle-label { margin-right: 10px; font-weight: normal; }
-    .view-toggle-controls { margin-bottom: 10px; }
 
+    /* Mantenuti stili specifici interni */
+    .config-item {
+      margin-bottom: 10px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+    }
+
+    .file-input-wrapper input[type=file] {
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .view-toggle-label {
+      margin-right: 10px;
+      font-weight: normal;
+    }
+
+    .view-toggle-controls {
+      margin-bottom: 10px;
+    }
   </style>
 </head>
+
 <body>
 
   <!-- Contenitore principale per lo scrolling -->
@@ -170,122 +339,179 @@
       <button class="collapsible-toggle">Configura AI</button>
       <div class="collapsible-content">
         <div id="aiConfigContainer">
-           <!-- Contenuto AI Config come prima -->
-           <div class="config-item">
-             <label for="llmModelSelect">Modello LLM:</label>
-             <select id="llmModelSelect">
-                <option value="none">Nessuno / Disabilitato</option>
-                <optgroup label="Google Gemini & Gemma">
-                    <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash (Veloce)</option>
-                    <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro (Potente)</option>
-                    <option value="gemini-2.5-pro-preview-05-06">Gemini 2.5 Pro (Preview 05-06)</option>
-                    <option value="gemini-2.5-flash-preview-04-17">Gemini 2.5 Flash (Preview 04-17)</option>
-                    <option value="gemini-2.0-flash">Gemini 2.0 Flash (?)</option>
-                    <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite (?)</option>
-                    <option value="gemma-3-27b-it">Gemma 3 27B IT (*)</option>
-                    <option value="gemma-3-12b-it">Gemma 3 12B IT (*)</option>
-                    <option value="gemma-3-4b-it">Gemma 3 4B IT (*)</option>
-                </optgroup>
-                <optgroup label="OpenAI ChatGPT">
-                    <option value="openai-gpt-4o">GPT-4o (Nuovo/Veloce/Potente)</option>
-                    <option value="openai-gpt-4-turbo">GPT-4 Turbo (Potente)</option>
-                    <option value="openai-gpt-3.5-turbo">GPT-3.5 Turbo (Equilibrato)</option>
-                </optgroup>
-             </select>
-           </div>
-           <div class="config-item">
-             <label for="apiKeyInput">Chiave API:</label>
-             <input type="password" id="apiKeyInput" placeholder="Inserisci la chiave API per il modello scelto">
-           </div>
-           <button id="saveAiConfigButton" class="btn btn-primary">
-             <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path> <polyline points="17 21 17 13 7 13 7 21"></polyline> <polyline points="7 3 7 8 15 8"></polyline> </svg>
-             Salva Configurazione AI
-           </button>
+          <!-- Contenuto AI Config come prima -->
+          <div class="config-item">
+            <label for="llmModelSelect">Modello LLM:</label>
+            <select id="llmModelSelect">
+              <option value="none">Nessuno / Disabilitato</option>
+              <optgroup label="Google Gemini & Gemma">
+                <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash (Veloce)</option>
+                <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro (Potente)</option>
+                <option value="gemini-2.5-pro-preview-05-06">Gemini 2.5 Pro (Preview 05-06)</option>
+                <option value="gemini-2.5-flash-preview-04-17">Gemini 2.5 Flash (Preview 04-17)</option>
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash (?)</option>
+                <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite (?)</option>
+                <option value="gemma-3-27b-it">Gemma 3 27B IT (*)</option>
+                <option value="gemma-3-12b-it">Gemma 3 12B IT (*)</option>
+                <option value="gemma-3-4b-it">Gemma 3 4B IT (*)</option>
+              </optgroup>
+              <optgroup label="OpenAI ChatGPT">
+                <option value="openai-gpt-4o">GPT-4o (Nuovo/Veloce/Potente)</option>
+                <option value="openai-gpt-4-turbo">GPT-4 Turbo (Potente)</option>
+                <option value="openai-gpt-3.5-turbo">GPT-3.5 Turbo (Equilibrato)</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="config-item">
+            <label for="apiKeyInput">Chiave API:</label>
+            <input type="password" id="apiKeyInput" placeholder="Inserisci la chiave API per il modello scelto">
+          </div>
+          <button id="saveAiConfigButton" class="btn btn-primary">
+            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            Salva Configurazione AI
+          </button>
         </div>
       </div>
     </div>
 
     <!-- 2. Extraction Section -->
     <div class="collapsible-section open" id="extractionSection">
-        <button class="collapsible-toggle">Analizza Form</button>
-        <div class="collapsible-content">
-            <!-- Contenuto Estrazione (controls, outputContainer, actions) come prima -->
-             <div id="controls">
-                <!-- Rimosso H3 duplicato -->
-                <button id="extractFormsButton" class="btn btn-primary">
-                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
-                    Estrai Forms
-                </button>
-                <br><br>
-                <label for="pageNameInput">Nome Pagina (per salvataggio HTML):</label>
-                <input type="text" id="pageNameInput" placeholder="Es: pagina_login_mio_sito">
-            </div>
-            <div id="outputContainer">
-                <div class="section-header">
-                    <h3>Output Form Estratto</h3>
-                    <div class="view-toggle-controls">
-                        <label class="view-toggle-label"><input type="radio" name="viewMode" value="preview" checked> Anteprima</label>
-                        <label class="view-toggle-label"><input type="radio" name="viewMode" value="source"> Codice Sorgente</label>
-                    </div>
-                </div>
-                <iframe id="previewFrame" sandbox="allow-forms allow-same-origin"></iframe>
-                <textarea id="htmlSourceTextarea" class="hidden" placeholder="Il codice HTML estratto apparirà qui..."></textarea>
-            </div>
-            <div id="actions">
-                <h3>Azioni sull'HTML Estratto</h3>
-                <button id="copyButton" disabled class="btn btn-primary">
-                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                    Copia HTML
-                </button>
-                <button id="saveButton" disabled class="btn btn-success">
-                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                    Salva come HTML
-                </button>
-                <button id="applySourceChangesButton" class="btn btn-secondary hidden">
-                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    Applica Modifiche al Codice
-                </button>
-            </div>
+      <button class="collapsible-toggle">Analizza Form</button>
+      <div class="collapsible-content">
+        <!-- Contenuto Estrazione (controls, outputContainer, actions) come prima -->
+        <div id="controls">
+          <button id="extractFormsButton" class="btn btn-primary">
+            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3">
+              </path>
+            </svg>
+            Estrai Forms
+          </button>
+
+          <!-- *** NUOVO BOTTONE AI *** -->
+          <button id="extractFormsWithAiButton" class="btn btn-success">
+            <svg class="btn-icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a10 10 0 1 0 10 10 A10.1 10.1 0 0 0 12 2z"></path>
+              <path d="M12 6v6l4 2"></path>
+              <path d="M17.6 17.6l-1.4 1.4"></path>
+              <path d="M6.4 6.4L5 5"></path>
+            </svg>
+            Estrai Forms con AI
+          </button>
+
+          <br><br>
+          <label for="pageNameInput">Nome Pagina (per salvataggio HTML):</label>
+          <input type="text" id="pageNameInput" placeholder="Es: pagina_login_mio_sito">
         </div>
+        <div id="outputContainer">
+          <div class="section-header">
+            <h3>Output Form Estratto</h3>
+            <div class="view-toggle-controls">
+              <label class="view-toggle-label"><input type="radio" name="viewMode" value="preview" checked>
+                Anteprima</label>
+              <label class="view-toggle-label"><input type="radio" name="viewMode" value="source"> Codice
+                Sorgente</label>
+            </div>
+          </div>
+          <iframe id="previewFrame" sandbox="allow-forms allow-same-origin"></iframe>
+          <textarea id="htmlSourceTextarea" class="hidden"
+            placeholder="Il codice HTML estratto apparirà qui..."></textarea>
+        </div>
+        <div id="actions">
+          <h3>Azioni sull'HTML Estratto</h3>
+          <button id="copyButton" disabled class="btn btn-primary">
+            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copia HTML
+          </button>
+          <button id="saveButton" disabled class="btn btn-success">
+            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            Salva come HTML
+          </button>
+          <button id="applySourceChangesButton" class="btn btn-secondary hidden">
+            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Applica Modifiche al Codice
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- 3. Filling Section -->
     <div class="collapsible-section" id="fillingSection">
-        <button class="collapsible-toggle">Compila Form</button>
-        <div class="collapsible-content">
-            <!-- Contenuto Compilazione (dataContainer, aiOutputContainer) come prima -->
-            <div id="dataContainer">
-                <div class="section-header">
-                    <h3>Dati JSON</h3>
-                    <div class="file-input-wrapper">
-                        <button id="loadDataButton" class="btn btn-warning">
-                            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
-                            Carica file .json
-                        </button>
-                        <input type="file" id="dataFileInput" accept=".json">
-                    </div>
-                </div>
-                <textarea id="dataInput" placeholder='Incolla qui i dati JSON o carica da file... Formato input suggerito per AI: [ { "descrizione": "Significato dato", "valore_dato": "Valore Effettivo" }, ... ] Formato output AI (e input per assegnazione): [ { "id": "id_campo_form", "valore": "Valore Effettivo" }, ... ]'></textarea>
-                <br>
-                <button id="assignValuesButton" class="btn btn-success">
-                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                    Assegna Valori (da JSON Input)
-                </button>
-                <button id="mapWithAiButton" class="btn btn-info">
-                    <svg class="btn-icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 A10.1 10.1 0 0 0 12 2z"></path><path d="M12 6v6l4 2"></path><path d="M17.6 17.6l-1.4 1.4"></path><path d="M6.4 6.4L5 5"></path></svg>
-                    Mappa Dati con AI
-                </button>
+      <button class="collapsible-toggle">Compila Form</button>
+      <div class="collapsible-content">
+        <!-- Contenuto Compilazione (dataContainer, aiOutputContainer) come prima -->
+        <div id="dataContainer">
+          <div class="section-header">
+            <h3>Dati JSON</h3>
+            <div class="file-input-wrapper">
+              <button id="loadDataButton" class="btn btn-warning">
+                <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path
+                    d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48">
+                  </path>
+                </svg>
+                Carica file .json
+              </button>
+              <input type="file" id="dataFileInput" accept=".json">
             </div>
-            <div id="aiOutputContainer" class="hidden">
-                <h3>Mapping Dati Suggerito dall'AI</h3>
-                <textarea id="aiOutputTextarea" readonly placeholder="Il mapping JSON suggerito dall'AI apparirà qui..."></textarea>
-                <br>
-                <button id="assignAiValuesButton" class="btn btn-success">
-                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                    Assegna Valori (da Suggerimento AI)
-                </button>
-            </div>
+          </div>
+          <textarea id="dataInput"
+            placeholder='Incolla qui i dati JSON o carica da file... Formato input suggerito per AI: [ { "descrizione": "Significato dato", "valore_dato": "Valore Effettivo" }, ... ] Formato output AI (e input per assegnazione): [ { "id": "id_campo_form", "valore": "Valore Effettivo" }, ... ]'></textarea>
+          <br>
+          <button id="assignValuesButton" class="btn btn-success">
+            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            Assegna Valori (da JSON Input)
+          </button>
+          <button id="mapWithAiButton" class="btn btn-info">
+            <svg class="btn-icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a10 10 0 1 0 10 10 A10.1 10.1 0 0 0 12 2z"></path>
+              <path d="M12 6v6l4 2"></path>
+              <path d="M17.6 17.6l-1.4 1.4"></path>
+              <path d="M6.4 6.4L5 5"></path>
+            </svg>
+            Mappa Dati con AI
+          </button>
         </div>
+        <div id="aiOutputContainer" class="hidden">
+          <h3>Mapping Dati Suggerito dall'AI</h3>
+          <textarea id="aiOutputTextarea" readonly
+            placeholder="Il mapping JSON suggerito dall'AI apparirà qui..."></textarea>
+          <br>
+          <button id="assignAiValuesButton" class="btn btn-success">
+            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            Assegna Valori (da Suggerimento AI)
+          </button>
+        </div>
+      </div>
     </div>
 
   </div> <!-- Fine #mainContentContainer -->
@@ -295,4 +521,5 @@
 
   <script src="popup.js"></script>
 </body>
+
 </html>
