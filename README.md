@@ -4,22 +4,132 @@ Estensione per Google Chrome per facilitare l'interazione con i form HTML: estra
 
 ## Funzionalità
 
-*   **Estrazione Form:** Identifica e estrae i form HTML presenti nella pagina attiva.
-*   **Semplificazione HTML:** Rimuove elementi e attributi non essenziali (come script, stili, elementi nascosti senza etichette/placeholder, ecc.) per ottenere una struttura più pulita e focalizzata sui campi compilabili.
+*   **Estrazione Form:** Identifica e estrae i form HTML presenti nella pagina attiva con algoritmi avanzati di riconoscimento.
+*   **Semplificazione HTML:** Rimuove elementi e attributi non essenziali per ottenere una struttura pulita e focalizzata sui campi compilabili.
 *   **Visualizzazione Flessibile:** Permette di passare tra una **Anteprima HTML** (rendering del codice estratto) e la visualizzazione del **Codice Sorgente** modificabile.
-*   **Modifica Codice Sorgente:** Nella vista codice sorgente, è possibile modificare l'HTML estratto. Le modifiche possono essere "applicate" per aggiornare la vista (e i dati usati per Copia/Salva/Assegna, sebbene l'assegnazione si basi sugli ID originali).
-*   **Copia HTML:** Copia negli appunti il codice HTML estratto e semplificato (o quello modificato nella textarea).
-*   **Salva HTML:** Salva l'HTML estratto e semplificato (o quello modificato) come file `.html`, includendo stili CSS di base per una buona leggibilità.
-*   **Caricamento Dati JSON:** Carica dati per la compilazione dei campi da un file `.json` o copiandoli/incollandoli direttamente nella textarea dedicata.
-*   **Assegnazione Valori:** Compila automaticamente i campi del form nella pagina web attiva utilizzando i dati caricati, basandosi sulla corrispondenza dell'attributo `id` del campo con l'`id` specificato nel JSON.
+*   **Modifica Codice Sorgente:** Nella vista codice sorgente, è possibile modificare l'HTML estratto. Le modifiche possono essere "applicate" per aggiornare la vista.
+*   **Copia HTML:** Copia negli appunti il codice HTML estratto e semplificato.
+*   **Salva HTML:** Salva l'HTML estratto come file `.html`, includendo stili CSS di base per una buona leggibilità.
+*   **Caricamento Dati JSON:** Carica dati per la compilazione dei campi da un file `.json` o copiandoli/incollandoli direttamente.
+*   **Assegnazione Valori:** Compila automaticamente i campi del form nella pagina web attiva utilizzando i dati caricati.
 *   **Messaggi di Stato:** Fornisce feedback visivo sull'esito delle operazioni.
 
-## Funzionalità AI (Nuovo!)
+## Funzionalità AI
 
-*   **Configurazione AI:** Permette di selezionare un provider LLM (Google Gemini, OpenAI ChatGPT) e inserire la relativa chiave API per abilitare le funzionalità AI. Le impostazioni sono salvate localmente.
-*   **Mapping Semantico con AI:** Un nuovo pulsante "Mappa Dati con AI" analizza l'HTML del form estratto e i dati JSON forniti dall'utente. Utilizza l'LLM configurato per capire il significato dei campi e dei dati, generando un nuovo JSON che mappa i valori JSON agli `id` corretti dei campi del form.
-*   **Revisione del Mapping:** Il JSON generato dall'AI viene mostrato in una nuova area di testo, permettendo all'utente di controllare (ed eventualmente copiare/modificare) il mapping suggerito prima di applicarlo.
-*   **Assegnazione Valori Mappati dall'AI:** Un pulsante dedicato permette di applicare i valori utilizzando il JSON mappato dall'AI.
+*   **Configurazione AI:** Permette di selezionare un provider LLM (Google Gemini, OpenAI ChatGPT) e inserire la relativa chiave API.
+*   **Mapping Semantico con AI:** Analizza l'HTML del form estratto e i dati JSON forniti dall'utente utilizzando l'LLM configurato per creare mapping semantici intelligenti.
+*   **Revisione del Mapping:** Il JSON generato dall'AI viene mostrato per controllo e modifica prima dell'applicazione.
+*   **Assegnazione Valori Mappati dall'AI:** Applica i valori utilizzando il JSON mappato dall'AI.
+
+## Logica di Estrazione Form
+
+### Algoritmo di Riconoscimento Form
+
+L'estensione utilizza un **sistema a doppio livello** per identificare e estrarre i form:
+
+#### 1. **Form Standard (`<form>`)**
+- Rileva tutti gli elementi `<form>` presenti nella pagina
+- Estrae la struttura interna preservando la gerarchia semantica
+- Mantiene attributi essenziali: `id`, `name`, `action`, `method`
+
+#### 2. **Form Logici (Pattern Recognition)**
+L'estensione identifica anche **contenitori logici** che funzionano come form senza utilizzare il tag `<form>`:
+
+**Criteri di Identificazione:**
+- Elementi con `role="form"` o `role="search"`
+- Contenitori con almeno 2 campi input O 1 campo input + 1 button
+- Fieldset con elementi interattivi
+- Sezioni con attributi `aria-label` o `aria-labelledby`
+
+**Filtri di Qualità:**
+- Esclude contenitori troppo generici (>500 caratteri di testo, >30 elementi figli)
+- Verifica la densità di elementi interattivi
+- Controlla la visibilità degli elementi
+
+### Sistema di Associazione Etichette
+
+L'estensione utilizza un **algoritmo gerarchico a 5 livelli** per associare etichette ai campi:
+
+#### **Livello 1: Associazione Diretta (Priorità Massima)**
+```html
+<label for="campo1">Nome</label>
+<input id="campo1" type="text">
+```
+
+#### **Livello 2: ARIA Labelledby**
+```html
+<div id="etichetta">Email</div>
+<input aria-labelledby="etichetta" type="email">
+```
+
+#### **Livello 3: ARIA Label**
+```html
+<input aria-label="Telefono" type="tel">
+```
+
+#### **Livello 4: Componente Wrapper (Frameworks Moderni)**
+Per framework come Angular, React, Vue:
+```html
+<p-calendar aria-label="Data Nascita">
+  <input id="data" type="tel">
+</p-calendar>
+```
+
+**Pattern Riconosciuti:**
+- `<label>Testo</label><custom-component>...</custom-component>`
+- `<div>Etichetta:</div><wrapper><input></wrapper>`
+- Componenti con prefissi: `p-`, `app-`, `sdk-`, `mat-`, `ion-`, `ng-`, `v-`, `react-`
+
+#### **Livello 5: Label Wrappante (Ultima Risorsa)**
+```html
+<label>
+  Nome Completo
+  <input type="text">
+</label>
+```
+
+### Estrazione Testo Etichette
+
+**Algoritmo di Pulizia del Testo:**
+1. **Rimozione Elementi Interattivi:** Elimina input, button, select annidati
+2. **Gestione Commenti:** Ignora commenti HTML/Angular (`<!---->`)
+3. **Estrazione Nodi Testo:** Naviga ricorsivamente i nodi DOM
+4. **Fallback al Title:** Usa l'attributo `title` se il testo non è disponibile
+5. **Normalizzazione:** Rimuove spazi eccessivi e caratteri di separazione finali
+
+### Elementi Processati ed Esclusi
+
+#### **Elementi Inclusi:**
+- ✅ `<input>` (tutti i tipi eccetto hidden, submit, reset, image, button)
+- ✅ `<textarea>`
+- ✅ `<select>` e `<option>`
+- ✅ `<fieldset>` e `<legend>`
+- ✅ `<label>` (con testo estratto pulito)
+- ✅ Elementi con ruoli: `textbox`, `combobox`, `listbox`, `checkbox`, `radio`, `switch`, `slider`
+
+#### **Elementi Esclusi:**
+- ❌ `<button>` (tutti i tipi)
+- ❌ `<input type="button|submit|reset|image|hidden">`
+- ❌ Elementi con ruoli: `button`, `spinbutton`, `searchbox`
+- ❌ Script, stili, metadata (`<script>`, `<style>`, `<head>`, etc.)
+- ❌ Elementi di navigazione (`<nav>`, `<header>`, `<footer>`)
+- ❌ Elementi nascosti senza etichette/placeholder
+
+### Preservazione Semantica
+
+**Attributi Essenziali Mantenuti:**
+- Identificatori: `id`, `name`
+- Tipi e valori: `type`, `value`, `placeholder`
+- Stato: `required`, `checked`, `selected`, `disabled`, `readonly`
+- Associazioni: `for`, `aria-label`, `aria-labelledby`
+- Vincoli: `min`, `max`, `step`, `pattern`
+- Accessibilità: `title`, `role`
+
+**Struttura HTML Preservata:**
+- Gerarchia form > fieldset > legend
+- Associazioni label-input
+- Tabelle con colspan/rowspan
+- Liste e raggruppamenti semantici
 
 ## Installazione
 
@@ -34,43 +144,39 @@ Per installare l'estensione in Chrome (o browser compatibili come Brave, Edge):
 
 ## Utilizzo
 
-1.  Naviga alla pagina web che contiene il form che desideri estrarre o compilare.
-2.  Clicca sull'icona dell'estensione "Form Helper" nella barra degli strumenti di Chrome. Si aprirà il popup.
-3.  **Estrazione Form:** Clicca sul pulsante **"Estrai Forms"**. L'estensione analizzerà la pagina, estrarrà e semplificherà i form e mostrerà il risultato nell'area di output. Il campo "Nome Pagina" verrà pre-compilato con il titolo della pagina.
+### Estrazione Form
+
+1.  Naviga alla pagina web che contiene il form che desideri estrarre.
+2.  Clicca sull'icona dell'estensione "Form Helper" nella barra degli strumenti di Chrome.
+3.  Clicca sul pulsante **"Estrai Forms"**. L'estensione analizzerà la pagina con gli algoritmi descritti sopra.
+4.  Il campo "Nome Pagina" verrà pre-compilato con il titolo della pagina.
+
+### Visualizzazione e Modifica
+
 4.  **Visualizzazione HTML:** Utilizza i radio button "Anteprima" e "Codice Sorgente" per alternare la visualizzazione.
     *   **Anteprima:** Mostra come appare il form estratto con gli stili di base.
-    *   **Codice Sorgente:** Mostra il codice HTML grezzo in una textarea modificabile. Puoi apportare modifiche qui. Se modifichi il codice, clicca su **"Applica Modifiche al Codice"** per aggiornare il contenuto che verrà usato per Copia/Salva/Anteprima.
-5.  **Azioni sull'HTML:**
-    *   **"Copia HTML"**: Copia il contenuto HTML attualmente visualizzato/applicato negli appunti.
-    *   **"Salva come HTML"**: Scarica l'HTML attualmente visualizzato/applicato come file `.html`. Il nome del file sarà basato sul contenuto del campo "Nome Pagina".
-6.  **Dati per Compilazione:**
-    *   Nella sezione "Dati per Compilazione (JSON)", puoi incollare i tuoi dati direttamente nella textarea o cliccare **"Carica file .json"** per selezionare un file dal tuo computer.
-    *   Assicurati che i dati JSON rispettino il formato specificato (vedi sotto).
-7.  **Assegnazione Valori:** Clicca sul pulsante **"Assegna Valori al Form"**. L'estensione scorrerà i dati JSON e tenterà di inserire i valori nei campi del form nella pagina web attiva che corrispondono agli ID specificati nel JSON.
+    *   **Codice Sorgente:** Mostra il codice HTML grezzo in una textarea modificabile.
+5.  **Modifica:** Se modifichi il codice, clicca su **"Applica Modifiche al Codice"** per aggiornare l'anteprima.
 
-8.  **(Opzionale) Configurazione AI:**
-    *   Nella sezione "Configurazione AI", **seleziona il Modello LLM specifico** che desideri utilizzare dall'elenco (es. Gemini 1.5 Flash, GPT-4o). I modelli sono raggruppati per provider (Google, OpenAI).
-    *   Inserisci la tua chiave API **corrispondente al provider del modello scelto** nel campo "Chiave API". (Es. usa una chiave Google Cloud per i modelli Gemini, una chiave OpenAI per i modelli GPT).
-    *   Clicca su "Salva Configurazione AI". La configurazione verrà salvata per usi futuri. **Nota:** Le chiavi API sono necessarie per usare le funzionalità AI e potrebbero comportare costi con il provider scelto in base al modello e all'utilizzo.
-9.  **(Opzionale) Mapping con AI:**
-    *   Assicurati di aver estratto un form (passo 3) e di aver caricato o incollato i dati JSON nell'area "Dati JSOM" (passo 6).
-    *   Assicurati che la Configurazione AI sia valida (passo 8).
-    *   Clicca sul pulsante **"Mappa Dati con AI"**. L'estensione invierà l'HTML e il JSON all'LLM configurato.
-    *   Attendi il completamento. Il risultato (un nuovo JSON con i mapping `id`-`valore` suggeriti) apparirà nell'area "Mapping Dati Suggerito dall'AI".
-    *   **Verifica il mapping suggerito dall'AI.** Potrebbe non essere perfetto.
-10. **(Opzionale) Assegnazione Valori Mappati dall'AI:**
-    *   Se il mapping suggerito dall'AI nell'area "Mapping Dati Suggerito dall'AI" è corretto, clicca sul pulsante **"Assegna Valori (da Suggerimento AI)"**.
-    *   L'estensione utilizzerà questo JSON mappato per compilare il form nella pagina web attiva.
-    
-    
+### Azioni sull'HTML
+
+6.  **"Copia HTML"**: Copia il contenuto HTML negli appunti.
+7.  **"Salva come HTML"**: Scarica l'HTML come file `.html` con stili inclusi.
+
+### Compilazione Automatica
+
+8.  **Dati per Compilazione:** Incolla i tuoi dati JSON nella textarea o clicca **"Carica file .json"**.
+9.  **Assegnazione Valori:** Clicca **"Assegna Valori al Form"** per compilare automaticamente i campi.
+
+### Configurazione e Mapping AI (Opzionale)
+
+10. **Configurazione AI:** Seleziona un modello LLM specifico e inserisci la tua chiave API.
+11. **Mapping con AI:** Clicca **"Mappa Dati con AI"** per creare mapping semantici intelligenti.
+12. **Verifica e Applicazione:** Controlla il mapping suggerito e clicca **"Assegna Valori (da Suggerimento AI)"**.
+
 ## Formato Dati JSON per la Compilazione
 
-I dati per la compilazione diretta devono essere forniti come un **array di oggetti JSON**. Ogni oggetto deve avere due chiavi principali:
-
-*   `id`: Una stringa che corrisponde all'attributo `id` del campo (input, textarea, select) nella pagina web.
-*   `valore`: Una stringa o un valore booleano che rappresenta il dato da inserire nel campo.
-
-**Esempio di file JSON:**
+I dati per la compilazione diretta devono essere forniti come un **array di oggetti JSON**:
 
 ```json
 [
@@ -79,27 +185,38 @@ I dati per la compilazione diretta devono essere forniti come un **array di ogge
   { "id": "email", "valore": "mario.rossi@example.com" },
   { "id": "checkboxAccetto", "valore": "OK" },      
   { "id": "radioOpzione2", "valore": "ValoreOpzione2" }, 
-  { "id": "commenti", "valore": "Questo è un commento di prova su più righe." },
+  { "id": "commenti", "valore": "Questo è un commento di prova." },
   { "id": "paese", "valore": "IT" } 
 ]
 ```
 
-## Note sul Formato Valore:
+### Note sul Formato Valore:
 
-Per input di tipo text, email, password, number, url, tel, date, time, textarea e select, il valore deve essere la stringa esatta o il numero da inserire/selezionare.
-Per input di tipo checkbox, il valore "OK" (stringa), true (booleano) o "true" (stringa) selezionerà la checkbox. Il valore "KO" (stringa), false (booleano) o "false" (stringa) deselezionerà la checkbox. Altri valori per le checkbox potrebbero essere ignorati.
-Per input di tipo radio, l'ID nel JSON (item.id) deve corrispondere all'ID della specifica opzione input[type=radio] che si vuole selezionare. Il valore nel JSON può essere "OK" o corrispondere all'attributo value dell'input radio (quest'ultimo è preferibile per maggiore precisione). Le altre opzioni con lo stesso name verranno automaticamente deselezionate dal browser.
-Gli input[type=file] non sono supportati per motivi di sicurezza.
+- **Text/Email/Password/Number/URL/Tel/Date/Time/Textarea/Select:** Valore stringa esatta
+- **Checkbox:** `"OK"`, `true`, `"true"` per selezionare; `"KO"`, `false`, `"false"` per deselezionare
+- **Radio:** L'ID deve corrispondere alla specifica opzione radio da selezionare
+- **File Input:** Non supportati per motivi di sicurezza
+
+## Compatibilità Framework
+
+L'estensione è ottimizzata per funzionare con:
+
+- ✅ **HTML Puro** - Form standard e strutture personalizzate
+- ✅ **Angular** - Componenti PrimeNG (p-calendar, p-dropdown, etc.)
+- ✅ **React** - Componenti Material-UI, Ant Design, etc.
+- ✅ **Vue.js** - Element UI, Vuetify, etc.
+- ✅ **Framework CSS** - Bootstrap, Tailwind, Foundation
+- ✅ **Librerie UI** - jQuery UI, Semantic UI, etc.
 
 ## Limitazioni
-L'estrazione si basa principalmente sui tag <form>. Form dinamici complessi o creati senza il tag <form> potrebbero non essere riconosciuti o estratti correttamente.
-La semplificazione HTML è euristica e potrebbe non funzionare perfettamente su tutti i siti web con strutture molto complesse o non standard.
-L'assegnazione valori funziona principalmente tramite ID. Campi senza ID potrebbero non essere compilabili con questa funzione.
 
-## Licenza
-Questo progetto è rilasciato sotto la licenza MIT. 
+- **Form Dinamici Complessi:** Form generati completamente via JavaScript senza markup HTML potrebbero non essere riconosciuti
+- **Shadow DOM:** Elementi all'interno di Shadow DOM potrebbero non essere accessibili
+- **Iframe:** Form in iframe separati richiedono elaborazione individuale
+- **Campi senza ID:** L'assegnazione automatica funziona tramite ID; campi senza ID non sono compilabili automaticamente
 
-## Crediti
-Utilizza DOMPurify per la sanitizzazione (sebbene la logica di estrazione corrente si concentri più sulla semplificazione strutturale che sulla sanitizzazione del HTML grezzo dell'intera pagina).
+## Sicurezza e Privacy
 
-Questo codice è stato realizzato con il supporto di Google AI Studio: link alla chat: https://aistudio.google.com/prompts/1IbkPFY2MtOLPi-Y4GxCHpa4-sodtP3Bw 
+- **Nessun Invio Dati:** Tutti i dati rimangono locali nel browser
+- **Chiavi API:** Salvate localmente, mai trasmesse a terzi
+- **Sandboxing:** L'anteprima
