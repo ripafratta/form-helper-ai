@@ -1,0 +1,163 @@
+<section class="form-section collapsed">
+                <h2 aria-expanded="false">MACRO-SEZIONE 1: ANAGRAFICA AZIENDALE E CONTESTO OPERATIVO</h2>
+                <div class="section-content" aria-hidden="true" style="max-height: 0px; opacity: 0; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px;">
+                    <fieldset>
+                        <legend>1.1 Dati Anagrafici e Legali</legend>
+                        <div class="form-group">
+                            <label for="s1_1_rag_soc">Ragione Sociale Completa:</label>
+                            <input type="text" id="s1_1_rag_soc" name="s1_1_rag_soc">
+                        </div>
+                        <div class="form-group">
+                            <label for="s1_1_piva_cf">Partita IVA / Codice Fiscale:</label>
+                            <input type="text" id="s1_1_piva_cf" name="s1_1_piva_cf">
+                        </div>
+                        <div class="form-group">
+                            <label for="s1_1_ateco">Codice ATECO (Primario e Secondari):</label>
+                            <input type="text" id="s1_1_ateco" name="s1_1_ateco">
+                        </div>
+                        <div class="form-group">
+                            <span class="radio-group-label">Forma Giuridica: (Spuntare una)</span>
+                            <div class="radio-group">
+                                <div><input type="radio" id="s1_1_fg_di" name="s1_1_forma_giuridica" value="ditta_individuale"><label for="s1_1_fg_di">Ditta Individuale</label></div>
+                                <div><input type="radio" id="s1_1_fg_sp" name="s1_1_forma_giuridica" value="societa_persone"><label for="s1_1_fg_sp">Società di Persone (SNC, SAS)</label></div>
+                                <div><input type="radio" id="s1_1_fg_sc" name="s1_1_forma_giuridica" value="societa_capitali"><label for="s1_1_fg_sc">Società di Capitali (SRL, SRLS, SPA, SAPA)</label></div>
+                                <div><input type="radio" id="s1_1_fg_coop" name="s1_1_forma_giuridica" value="cooperativa"><label for="s1_1_fg_coop">Cooperativa</label></div>
+                                <div><input type="radio" id="s1_1_fg_cons" name="s1_1_forma_giuridica" value="consorzio"><label for="s1_1_fg_cons">Consorzio</label></div>
+                                <div class="inline-input-group">
+                                    <input type="radio" id="s1_1_fg_startup" name="s1_1_forma_giuridica" value="startup_innovativa">
+                                    <label for="s1_1_fg_startup">Startup Innovativa / PMI Innovativa</label>
+                                    <input type="text" id="s1_1_forma_giuridica_startup_data" name="s1_1_forma_giuridica_startup_data" placeholder="Data iscrizione registro (se Startup/PMI Innovativa)" class="inline-specifier">
+                                </div>
+                                <div class="inline-input-group">
+                                    <input type="radio" id="s1_1_fg_altro" name="s1_1_forma_giuridica" value="altro">
+                                    <label for="s1_1_fg_altro">Altro:</label>
+                                    <input type="text" id="s1_1_forma_giuridica_altro_spec" name="s1_1_forma_giuridica_altro_spec" placeholder="Specificare altra forma giuridica" class="inline-specifier">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="s1_1_data_costituzione">Data di Costituzione:</label>
+                            <input type="date" id="s1_1_data_costituzione" name="s1_1_data_costituzione">
+                        </div>
+                        <div class="form-group">
+                            <label for="s1_1_sede_legale">Sede Legale (Indirizzo completo):</label>
+                            <input type="text" id="s1_1_sede_legale" name="s1_1_sede_legale">
+                        </div>
+                        <div class="form-group">
+                            <label for="s1_1_sedi_operative">Sedi Operative Rilevanti (elencare, specificando se produttive, commerciali, R&amp;S):</label>
+                            <textarea id="s1_1_sedi_operative" name="s1_1_sedi_operative" rows="3"></textarea>
+                        </div>
+                    </fieldset>
+
+                    <fieldset>
+                        <legend>1.2 Struttura Organizzativa e Dimensionale</legend>
+                        <div class="form-group">
+                            <label for="s1_2_dipendenti_ula">Numero Medio Dipendenti (ULA) ultimo esercizio chiuso:</label>
+                            <input type="number" id="s1_2_dipendenti_ula" name="s1_2_dipendenti_ula">
+                        </div>
+                        <div class="form-group">
+                            <span class="radio-group-label">Fatturato Annuo ultimo esercizio chiuso:</span>
+                            <div class="radio-group">
+                                <div><input type="radio" id="s1_2_fatt_r1" name="s1_2_fatturato_range" value="<2M"><label for="s1_2_fatt_r1">&lt; 2 Milioni €</label></div>
+                                <div><input type="radio" id="s1_2_fatt_r2" name="s1_2_fatturato_range" value="2-10M"><label for="s1_2_fatt_r2">2 - 10 Milioni €</label></div>
+                                <div><input type="radio" id="s1_2_fatt_r3" name="s1_2_fatturato_range" value="10-50M"><label for="s1_2_fatt_r3">10 - 50 Milioni €</label></div>
+                                <div><input type="radio" id="s1_2_fatt_r4" name="s1_2_fatturato_range" value=">50M"><label for="s1_2_fatt_r4">&gt; 50 Milioni €</label></div>
+                            </div>
+                            <label for="s1_2_fatturato_valore" class="sub-label">Valore preciso (se disponibile):</label>
+                            <input type="number" id="s1_2_fatturato_valore" name="s1_2_fatturato_valore" step="any" placeholder="€">
+                        </div>
+                         <div class="form-group">
+                            <span class="radio-group-label">Totale di Bilancio Annuo ultimo esercizio chiuso: (Opzionale)</span>
+                            <div class="radio-group">
+                                <div><input type="radio" id="s1_2_bil_r1" name="s1_2_bilancio_range" value="<2M"><label for="s1_2_bil_r1">&lt; 2 Milioni €</label></div>
+                                <div><input type="radio" id="s1_2_bil_r2" name="s1_2_bilancio_range" value="2-10M"><label for="s1_2_bil_r2">2 - 10 Milioni €</label></div>
+                                <div><input type="radio" id="s1_2_bil_r3" name="s1_2_bilancio_range" value="10-50M"><label for="s1_2_bil_r3">10 - 50 Milioni €</label></div>
+                                <div><input type="radio" id="s1_2_bil_r4" name="s1_2_bilancio_range" value=">50M"><label for="s1_2_bil_r4">&gt; 50 Milioni €</label></div>
+                            </div>
+                            <label for="s1_2_bilancio_valore" class="sub-label">Valore preciso (se disponibile):</label>
+                            <input type="number" id="s1_2_bilancio_valore" name="s1_2_bilancio_valore" step="any" placeholder="€">
+                        </div>
+                        <div class="form-group">
+                            <span class="radio-group-label">L'azienda fa parte di un Gruppo?</span>
+                            <div class="radio-group inline-options">
+                                <div><input type="radio" id="s1_2_gruppo_si" name="s1_2_gruppo" value="si"><label for="s1_2_gruppo_si">Sì</label></div>
+                                <div><input type="radio" id="s1_2_gruppo_no" name="s1_2_gruppo" value="no"><label for="s1_2_gruppo_no">No</label></div>
+                            </div>
+                            <input type="text" id="s1_2_gruppo_nome" name="s1_2_gruppo_nome" placeholder="Se Sì, specificare nome Gruppo e se Controllante/Controllata/Collegata" class="conditional-input">
+                        </div>
+                        <div class="form-group">
+                            <span class="radio-group-label">Presenza di un Organigramma formalizzato?</span>
+                            <div class="radio-group inline-options">
+                                <div><input type="radio" id="s1_2_organigramma_si" name="s1_2_organigramma" value="si"><label for="s1_2_organigramma_si">Sì</label></div>
+                                <div><input type="radio" id="s1_2_organigramma_no" name="s1_2_organigramma" value="no"><label for="s1_2_organigramma_no">No</label></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Principali Figure Chiave/Referenti per aree:</label>
+                            <input type="text" id="s1_2_ref_direzione" name="s1_2_ref_direzione" placeholder="Direzione/CEO (Nome, Ruolo, Contatti)">
+                            <input type="text" id="s1_2_ref_finanza_agevolata" name="s1_2_ref_finanza_agevolata" placeholder="Referente Finanza Agevolata (Nome, Ruolo, Contatti)">
+                            <input type="text" id="s1_2_ref_tecnico" name="s1_2_ref_tecnico" placeholder="Referente Tecnico/Produzione (Nome, Ruolo, Contatti)">
+                            <input type="text" id="s1_2_ref_innovazione" name="s1_2_ref_innovazione" placeholder="Referente R&amp;S/Innovazione (Nome, Ruolo, Contatti)">
+                        </div>
+                    </fieldset>
+
+                    <fieldset>
+                        <legend>1.3 Mercato, Prodotti/Servizi e Posizionamento</legend>
+                        <div class="form-group">
+                            <label for="s1_3_attivita_descr">Descrizione sintetica Attività Principale:</label>
+                            <textarea id="s1_3_attivita_descr" name="s1_3_attivita_descr" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="s1_3_prodotti_servizi">Principali Prodotti/Servizi Offerti (elencare brevemente):</label>
+                            <textarea id="s1_3_prodotti_servizi" name="s1_3_prodotti_servizi" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <span class="checkbox-group-label">Mercato di Riferimento Primario: (Spuntare una o più)</span>
+                            <div class="checkbox-group">
+                                <div><input type="checkbox" id="s1_3_merc_loc" name="s1_3_mercato_rif[]" value="locale"><label for="s1_3_merc_loc">Locale</label></div>
+                                <div><input type="checkbox" id="s1_3_merc_reg" name="s1_3_mercato_rif[]" value="regionale"><label for="s1_3_merc_reg">Regionale</label></div>
+                                <div><input type="checkbox" id="s1_3_merc_naz" name="s1_3_mercato_rif[]" value="nazionale"><label for="s1_3_merc_naz">Nazionale</label></div>
+                                <div class="inline-input-group">
+                                    <input type="checkbox" id="s1_3_merc_eu" name="s1_3_mercato_rif[]" value="europeo">
+                                    <label for="s1_3_merc_eu">Europeo</label>
+                                    <input type="text" id="s1_3_mercato_rif_ue_spec" name="s1_3_mercato_rif_ue_spec" placeholder="Specificare principali paesi UE" class="inline-specifier">
+                                </div>
+                                <div class="inline-input-group">
+                                    <input type="checkbox" id="s1_3_merc_extraeu" name="s1_3_mercato_rif[]" value="extra_ue">
+                                    <label for="s1_3_merc_extraeu">Extra-UE</label>
+                                    <input type="text" id="s1_3_mercato_rif_extraue_spec" name="s1_3_mercato_rif_extraue_spec" placeholder="Specificare principali paesi Extra-UE" class="inline-specifier">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <span class="checkbox-group-label">Tipologia Principali Clienti: (Spuntare una o più)</span>
+                            <div class="checkbox-group">
+                                <div><input type="checkbox" id="s1_3_cli_b2b" name="s1_3_clienti_tipo[]" value="b2b"><label for="s1_3_cli_b2b">B2B (Aziende)</label></div>
+                                <div><input type="checkbox" id="s1_3_cli_b2c" name="s1_3_clienti_tipo[]" value="b2c"><label for="s1_3_cli_b2c">B2C (Consumatori finali)</label></div>
+                                <div><input type="checkbox" id="s1_3_cli_b2g" name="s1_3_clienti_tipo[]" value="b2g"><label for="s1_3_cli_b2g">B2G (Pubblica Amministrazione)</label></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="s1_3_concorrenti">Principali Concorrenti (identificare 2-3):</label>
+                            <input type="text" id="s1_3_concorrenti" name="s1_3_concorrenti">
+                        </div>
+                        <div class="form-group">
+                            <span class="checkbox-group-label">Elementi Distintivi/Vantaggi Competitivi percepiti: (Spuntare più opzioni)</span>
+                            <div class="checkbox-group">
+                                <div><input type="checkbox" id="s1_3_vant_prezzo" name="s1_3_vantaggi[]" value="prezzo"><label for="s1_3_vant_prezzo">Prezzo</label></div>
+                                <div><input type="checkbox" id="s1_3_vant_qualita" name="s1_3_vantaggi[]" value="qualita"><label for="s1_3_vant_qualita">Qualità Prodotto/Servizio</label></div>
+                                <div><input type="checkbox" id="s1_3_vant_inntec" name="s1_3_vantaggi[]" value="innovazione_tec"><label for="s1_3_vant_inntec">Innovazione Tecnologica</label></div>
+                                <div><input type="checkbox" id="s1_3_vant_servcli" name="s1_3_vantaggi[]" value="servizio_clienti"><label for="s1_3_vant_servcli">Servizio Clienti/Assistenza</label></div>
+                                <div><input type="checkbox" id="s1_3_vant_brand" name="s1_3_vantaggi[]" value="brand"><label for="s1_3_vant_brand">Brand/Reputazione</label></div>
+                                <div><input type="checkbox" id="s1_3_vant_pers" name="s1_3_vantaggi[]" value="personalizzazione"><label for="s1_3_vant_pers">Personalizzazione</label></div>
+                                <div><input type="checkbox" id="s1_3_vant_sost" name="s1_3_vantaggi[]" value="sostenibilita"><label for="s1_3_vant_sost">Sostenibilità offerta</label></div>
+                                <div class="inline-input-group">
+                                    <input type="checkbox" id="s1_3_vant_altro" name="s1_3_vantaggi[]" value="altro">
+                                    <label for="s1_3_vant_altro">Altro:</label>
+                                    <input type="text" id="s1_3_vantaggi_altro_spec" name="s1_3_vantaggi_altro_spec" placeholder="Specificare altro vantaggio" class="inline-specifier">
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+            </section>
