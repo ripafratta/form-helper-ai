@@ -1,0 +1,27 @@
+[
+  {
+    "sezione": "sitat",
+    "campi": [
+      {
+        "descrizione": "Data stipula contratto",
+        "valore": "01/01/2015"
+      },
+      {
+        "descrizione": "Data esecutività contratto",
+        "valore": "01/01/2016"
+      },
+      {
+        "descrizione": "Data decorrenza contrattuale",
+        "valore": "01/01/2017"
+      },
+      {
+        "descrizione": "Data scadenza contrattuale",
+        "valore": "01/01/2018"
+      },
+      {
+        "descrizione": "Importo cauzione",
+        "valore": "2019,11"
+      }
+    ]
+  }
+]

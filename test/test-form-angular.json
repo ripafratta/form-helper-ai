@@ -1,0 +1,32 @@
+[
+  {
+    "sezione": "sitat",
+    "campi": [
+      {
+        "id": "qtw3m5o643",
+        "descrizione": "Data stipula contratto",
+        "valore": "01/01/2015"
+      },
+      {
+        "id": "a79a6edyfjb",
+        "descrizione": "Data esecutività contratto",
+        "valore": "01/01/2016"
+      },
+      {
+        "id": "r3snitvuth",
+        "descrizione": "Data decorrenza contrattuale",
+        "valore": "01/01/2017"
+      },
+      {
+        "id": "n8wzx1o025p",
+        "descrizione": "Data scadenza contrattuale",
+        "valore": "01/01/2018"
+      },
+      {
+        "id": "aqa8xnxvyzq",
+        "descrizione": "Importo cauzione",
+        "valore": "2019,11"
+      }
+    ]
+  }
+]

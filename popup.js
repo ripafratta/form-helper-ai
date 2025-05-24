@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const dataFileInput = document.getElementById('dataFileInput');
     const loadDataButton = document.getElementById('loadDataButton');
     const dataInput = document.getElementById('dataInput');
-    const assignValuesButton = document.getElementById('assignValuesButton'); // Bottone per JSON input
+    const assignValuesButton = document.getElementById('assignValuesButton');
     const statusMessage = document.getElementById('statusMessage');
     const llmModelSelect = document.getElementById('llmModelSelect');
     const apiKeyInput = document.getElementById('apiKeyInput');
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const mapWithAiButton = document.getElementById('mapWithAiButton');
     const aiOutputContainer = document.getElementById('aiOutputContainer');
     const aiOutputTextarea = document.getElementById('aiOutputTextarea');
-    const assignAiValuesButton = document.getElementById('assignAiValuesButton'); // Bottone per output AI
+    const assignAiValuesButton = document.getElementById('assignAiValuesButton');
     const aiConfigSection = document.getElementById('aiConfigSection');
     const extractionSection = document.getElementById('extractionSection');
     const fillingSection = document.getElementById('fillingSection');
@@ -137,7 +137,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return null;
         }
     }
-
 
     // funzione per creare il prompt AI (dal documento allegato):
     function createFormExtractionPrompt(htmlSource, pageTitle) {
@@ -359,7 +358,7 @@ Genera ora l'array JSON di mapping.`;
             showStatus('Scheda attiva non trovata per l\'assegnazione.', 'error');
             return;
         }
-        showStatus('Assegnazione valori in corso nella pagina...', 'info', 0);
+        showStatus('⚡ Assegnazione valori in corso nella pagina...', 'info', 0);
         try {
             const results = await chrome.scripting.executeScript({
                 target: { tabId: tab.id },
@@ -375,23 +374,22 @@ Genera ora l'array JSON di mapping.`;
             });
             if (results && results[0] && results[0].result) {
                 const { assignmentsCount, notFoundCount, errorMessages } = results[0].result;
-                let statusMsg = `Assegnazione completata. Campi compilati: ${assignmentsCount}. Non trovati/Errori: ${notFoundCount}.`;
+                let statusMsg = `✅ Assegnazione completata. Campi compilati: ${assignmentsCount}. Non trovati/Errori: ${notFoundCount}.`;
                 let statusType = 'info';
                 if (assignmentsCount > 0 && notFoundCount === 0) statusType = 'success';
                 else if (assignmentsCount > 0 && notFoundCount > 0) { statusType = 'warning'; statusMsg += " Alcuni campi non trovati o con errori."; }
-                else if (assignmentsCount === 0 && notFoundCount > 0) { statusType = 'error'; statusMsg = `Assegnazione fallita. Nessun campo trovato o compilato. Errori/Non Trovati: ${notFoundCount}.`; }
+                else if (assignmentsCount === 0 && notFoundCount > 0) { statusType = 'error'; statusMsg = `❌ Assegnazione fallita. Nessun campo trovato o compilato. Errori/Non Trovati: ${notFoundCount}.`; }
                 if (errorMessages && errorMessages.length > 0) console.warn("Dettagli assegnazione (errori/non trovati):", errorMessages);
                 showStatus(statusMsg, statusType, 7000);
             } else {
                 console.error("Risultato inatteso dall'assegnazione:", results);
-                showStatus('Risultato inatteso durante l\'assegnazione dei valori.', 'error');
+                showStatus('❌ Risultato inatteso durante l\'assegnazione dei valori.', 'error');
             }
         } catch (error) {
             console.error('Errore durante l\'iniezione dello script di assegnazione:', error);
-            showStatus(`Errore script assegnazione: ${error.message}`, 'error');
+            showStatus(`❌ Errore script assegnazione: ${error.message}`, 'error');
         }
     }
-
 
     // funzione per estrarre DOM HTML dalla pagina:
     async function extractPageHTML() {
@@ -421,7 +419,6 @@ Genera ora l'array JSON di mapping.`;
             throw new Error(`Errore nell'estrazione HTML: ${error.message}`);
         }
     }
-
 
     // ===========================================
     // --- NUOVA FUNZIONE DI PREPROCESSING JSON ---
@@ -472,34 +469,59 @@ Genera ora l'array JSON di mapping.`;
         return extractedPairs;
     }
 
-
     // ===========================================
     // --- API Call Functions ---
     // ===========================================
     async function callGoogleApi(modelName, prompt, apiKey) {
-        const endpointHost = modelName.startsWith('gemma-') ? "generativelanguage.googleapis.com" : "generativelanguage.googleapis.com";
+        const endpointHost = "generativelanguage.googleapis.com";
         const apiVersion = "v1beta";
         const API_URL = `https://${endpointHost}/${apiVersion}/models/${modelName}:generateContent?key=${apiKey}`;
+        
         console.log(`Calling Google API (${modelName}):`, API_URL);
+        
         const requestBody = {
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { maxOutputTokens: 8192 },
+            generationConfig: {
+                // maxOutputTokens: 8192, // Optional: configure if needed
+            },
+            // safetySettings: [ // Optional: configure safety settings if needed
+            //    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+            // ]
         };
-        const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
+
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }, // API key in URL, no Bearer token needed for this endpoint
+            body: JSON.stringify(requestBody)
+        });
+
         if (!response.ok) {
-            const errorBody = await response.text();
-            console.error(`Google API Error Response (${modelName}):`, errorBody);
-            throw new Error(`Errore API Google (${modelName}): ${response.status} ${response.statusText}. Dettagli: ${errorBody}`);
+            const errorText = await response.text();
+            let errorJson = null;
+            try { errorJson = JSON.parse(errorText); } catch (e) { /* ignore */ }
+            console.error(`Google API Error Response (${modelName}) - Status: ${response.status}`, errorJson || errorText);
+            const errorMessage = errorJson?.error?.message || errorText || response.statusText;
+            throw new Error(`Errore API Google (${modelName}): ${response.status}. Dettagli: ${errorMessage}`);
         }
+
         const data = await response.json();
-        if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+
+        if (data.candidates && data.candidates.length > 0 &&
+            data.candidates[0].content && data.candidates[0].content.parts &&
+            data.candidates[0].content.parts.length > 0 &&
+            typeof data.candidates[0].content.parts[0].text === 'string') {
             return data.candidates[0].content.parts[0].text;
-        } else if (data.candidates && data.candidates[0]?.finishReason && data.candidates[0].finishReason !== 'STOP') {
-            console.error(`Google generation stopped (${modelName}):`, data.candidates[0].finishReason, data);
-            throw new Error(`Generazione Google (${modelName}) interrotta: ${data.candidates[0].finishReason}`);
+        } else if (data.candidates && data.candidates.length > 0 && data.candidates[0].finishReason && data.candidates[0].finishReason !== 'STOP') {
+            const reason = data.candidates[0].finishReason;
+            let safetyRatingsInfo = "";
+            if (data.candidates[0].safetyRatings) {
+                safetyRatingsInfo = " SafetyRatings: " + JSON.stringify(data.candidates[0].safetyRatings);
+            }
+            console.error(`Google API generation stopped (${modelName}) due to: ${reason}.${safetyRatingsInfo}`, data);
+            throw new Error(`Generazione Google (${modelName}) interrotta: ${reason}.${safetyRatingsInfo}`);
         } else {
-            console.error(`Struttura risposta Google inattesa (${modelName}):`, data);
-            throw new Error(`Struttura risposta API Google (${modelName}) non valida.`);
+            console.error(`Struttura risposta Google API inattesa (${modelName}):`, data);
+            throw new Error(`Struttura risposta API Google (${modelName}) non valida o contenuto mancante.`);
         }
     }
 
@@ -512,6 +534,7 @@ Genera ora l'array JSON di mapping.`;
                 { role: "system", content: "Sei un assistente AI specializzato nell'analisi di form HTML e dati JSON per creare mapping semantici. Rispondi SOLO con l'array JSON richiesto, senza testo aggiuntivo." },
                 { role: "user", content: prompt }
             ],
+            // max_tokens: 4096 // Optional: consider adding if needed
         };
         if (modelName.includes("gpt-4") || modelName.includes("1106") || modelName.includes("0125") || modelName.includes("gpt-4o")) {
             requestBody.response_format = { type: "json_object" };
@@ -519,18 +542,19 @@ Genera ora l'array JSON di mapping.`;
         }
         const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify(requestBody) });
         if (!response.ok) {
-            const errorBody = await response.json();
+            const errorBody = await response.json(); // OpenAI usually returns JSON errors
             console.error(`OpenAI API Error Response (${modelName}):`, errorBody);
             throw new Error(`Errore API OpenAI (${modelName}): ${response.status} ${response.statusText}. Dettagli: ${errorBody.error?.message || JSON.stringify(errorBody)}`);
         }
         const data = await response.json();
         if (data.choices && data.choices[0]?.message?.content) {
-            return data.choices[0].message.content;
+            return data.choices[0].message.content; // This content should be a JSON string if json_object was requested and successful
         } else {
             console.error(`Struttura risposta OpenAI inattesa (${modelName}):`, data);
             throw new Error(`Struttura risposta API OpenAI (${modelName}) non valida.`);
         }
     }
+
 
     // ===========================================
     // --- Session State Management ---
@@ -587,24 +611,24 @@ Genera ora l'array JSON di mapping.`;
                 aiConfigSection?.classList.toggle('open', !!savedState.aiConfigOpen);
                 extractionSection?.classList.toggle('open', savedState.extractionOpen !== false); // Default true
                 fillingSection?.classList.toggle('open', !!savedState.fillingOpen);
-                showStatus('Stato sessione precedente ripristinato.', 'info', 3000);
+                showStatus('🔄 Stato sessione precedente ripristinato.', 'info', 3000);
             } else {
                 console.log('No previous session state found.');
                 copyButton.disabled = true;
                 saveButton.disabled = true;
                 assignAiValuesButton.disabled = true;
                 aiOutputContainer.classList.add('hidden');
-                // Default collapsible states if no session
-                aiConfigSection?.classList.remove('open'); // AI config default closed (loadAiConfig might open it)
-                extractionSection?.classList.add('open');   // Extraction default open
-                fillingSection?.classList.remove('open'); // Filling default closed
+                // DEFAULT: TUTTE LE SEZIONI CHIUSE ALL'INIZIO
+                aiConfigSection?.classList.remove('open');
+                extractionSection?.classList.remove('open');
+                fillingSection?.classList.remove('open');
             }
         } catch (error) {
             console.error("Error loading session state:", error);
-            showStatus('Errore nel caricamento dello stato della sessione.', 'error');
-            // Default collapsible states on error
+            showStatus('❌ Errore nel caricamento dello stato della sessione.', 'error');
+            // Default: tutte le sezioni chiuse in caso di errore
             aiConfigSection?.classList.remove('open');
-            extractionSection?.classList.add('open');
+            extractionSection?.classList.remove('open');
             fillingSection?.classList.remove('open');
         }
     }
@@ -650,17 +674,13 @@ Genera ora l'array JSON di mapping.`;
                 llmModelSelect.value = 'none';
                 apiKeyInput.value = '';
             }
-            const sessionResult = await chrome.storage.session.get(SESSION_STATE_KEY);
-            // Imposta stato iniziale AI Config solo se non già caricato da sessione
-            // E se effettivamente serve configurazione (nessuna chiave o modello salvato)
-            if (!sessionResult[SESSION_STATE_KEY]?.hasOwnProperty('aiConfigOpen')) {
-                aiConfigSection?.classList.toggle('open', needsConfig);
-            }
+            
+            // NON aprire automaticamente la sezione AI se serve configurazione
+            // L'utente sceglierà quando aprirla
 
         } catch (error) {
             console.error('Errore caricamento configurazione AI:', error);
-            showStatus('Errore nel caricamento della configurazione AI.', 'error');
-            aiConfigSection?.classList.add('open'); // Apri in caso di errore per permettere all'utente di vedere/correggere
+            showStatus('❌ Errore nel caricamento della configurazione AI.', 'error');
         }
     }
 
@@ -668,27 +688,28 @@ Genera ora l'array JSON di mapping.`;
         const selectedModel = llmModelSelect.value;
         const enteredApiKey = apiKeyInput.value.trim();
         if (selectedModel !== 'none' && !enteredApiKey) {
-            showStatus('Inserisci la chiave API per il modello selezionato.', 'warning');
+            showStatus('⚠️ Inserisci la chiave API per il modello selezionato.', 'warning');
             apiKeyInput.focus();
             return;
         }
         if (selectedModel === 'none' && enteredApiKey) {
-            showStatus('Seleziona un modello AI se inserisci una chiave API.', 'warning');
+            showStatus('⚠️ Seleziona un modello AI se inserisci una chiave API.', 'warning');
             llmModelSelect.focus();
             return;
         }
         aiConfig = { model: selectedModel, apiKey: enteredApiKey };
         try {
             await chrome.storage.local.set({ [AI_CONFIG_KEY]: aiConfig });
-            showStatus('Configurazione AI salvata con successo!', 'success');
+            showStatus('✅ Configurazione AI salvata con successo!', 'success');
             console.log('Configurazione AI salvata:', aiConfig.model);
             if (aiConfig.model !== 'none' && aiConfig.apiKey) {
-                aiConfigSection?.classList.remove('open'); // Chiudi se configurato
-                saveSessionState(); // Salva anche lo stato del collapsible
+                // Non chiudiamo automaticamente la sezione
+                showStatus('🤖 AI configurata! Ora puoi usare le funzionalità potenziate.', 'success', 4000);
             }
+            saveSessionState(); // Salva anche lo stato del collapsible
         } catch (error) {
             console.error('Errore salvataggio config AI:', error);
-            showStatus(`Errore salvataggio config AI: ${error.message}`, 'error');
+            showStatus(`❌ Errore salvataggio config AI: ${error.message}`, 'error');
         }
     });
 
@@ -696,8 +717,7 @@ Genera ora l'array JSON di mapping.`;
     // --- Event Listeners for State Saving ---
     // ===========================================
     pageNameInput.addEventListener('input', saveSessionState);
-    dataInput.addEventListener('input', saveSessionState); // Salva JSON input mentre l'utente digita/incolla
-    // aiOutputTextarea non ha un listener 'input' perché è readonly, il suo stato viene salvato dopo il mapping AI
+    dataInput.addEventListener('input', saveSessionState);
 
     // ===========================================
     // --- Core Functionality Event Listeners ---
@@ -714,7 +734,7 @@ Genera ora l'array JSON di mapping.`;
             } else {
                 htmlSourceTextarea.value = formatHtmlForTextarea(currentHtmlContent || '');
             }
-            saveSessionState(); // Salva cambio view mode
+            saveSessionState();
         });
     });
 
@@ -722,19 +742,22 @@ Genera ora l'array JSON di mapping.`;
     applySourceChangesButton.addEventListener('click', () => {
         currentHtmlContent = cleanHtmlFromTextareaFormatting(htmlSourceTextarea.value);
         previewFrame.srcdoc = currentHtmlContent;
-        htmlSourceTextarea.value = formatHtmlForTextarea(currentHtmlContent); // Riformatta per coerenza
-        showStatus('Modifiche codice sorgente applicate.', 'success');
-        saveSessionState(); // Salva HTML aggiornato
+        htmlSourceTextarea.value = formatHtmlForTextarea(currentHtmlContent);
+        showStatus('✅ Modifiche codice sorgente applicate.', 'success');
+        saveSessionState();
     });
 
-    // Estrazione Form
+    // Estrazione Form Algoritmica
     extractFormsButton.addEventListener('click', async () => {
-        showStatus('Estrazione forms in corso...', 'info', 0);
-        currentHtmlContent = null; // Resetta stato HTML
-        previewFrame.srcdoc = '<p>Estrazione...</p>';
-        htmlSourceTextarea.value = ''; copyButton.disabled = true; saveButton.disabled = true;
-        aiOutputContainer.classList.add('hidden'); aiOutputTextarea.value = ''; assignAiValuesButton.disabled = true;
-        // Non resettare pageNameInput, dataInput, aiOutputTextarea qui, saranno gestiti da save/load session
+        showStatus('🔧 Estrazione algoritmica in corso...', 'info', 0);
+        currentHtmlContent = null;
+        previewFrame.srcdoc = '<p style="padding:20px; text-align:center;">🔧 Estrazione algoritmica...</p>';
+        htmlSourceTextarea.value = '';
+        copyButton.disabled = true;
+        saveButton.disabled = true;
+        aiOutputContainer.classList.add('hidden');
+        aiOutputTextarea.value = '';
+        assignAiValuesButton.disabled = true;
 
         // Forza la vista anteprima
         document.querySelector('input[name="viewMode"][value="preview"]').checked = true;
@@ -743,53 +766,71 @@ Genera ora l'array JSON di mapping.`;
         applySourceChangesButton.classList.add('hidden');
 
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (!tab || !tab.id) { showStatus('Errore scheda attiva.', 'error'); previewFrame.srcdoc = '<p>Errore scheda</p>'; return; }
+        if (!tab || !tab.id) {
+            showStatus('❌ Errore scheda attiva.', 'error');
+            previewFrame.srcdoc = '<p style="color:red; padding:20px;">❌ Errore scheda</p>';
+            return;
+        }
 
-        // Precompila nome pagina se vuoto, poi salva sessione
-        if (!pageNameInput.value && tab.title) { pageNameInput.value = sanitizeFilenameForSave(tab.title); }
-        else if (!pageNameInput.value) { pageNameInput.value = 'pagina_estratta'; }
-        // Salva il nome pagina (suggerito o default) e lo stato corrente prima dell'estrazione
+        // Precompila nome pagina se vuoto
+        if (!pageNameInput.value && tab.title) {
+            pageNameInput.value = sanitizeFilenameForSave(tab.title);
+        } else if (!pageNameInput.value) {
+            pageNameInput.value = 'pagina_estratta_algoritmica';
+        }
         saveSessionState();
 
         try {
-            const results = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: () => window.extractAndSimplifyForms_content() });
+            const results = await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: () => window.extractAndSimplifyForms_content()
+            });
+            
             if (results && results[0] && typeof results[0].result === 'string') {
-                currentHtmlContent = results[0].result; // Aggiorna stato HTML
+                currentHtmlContent = results[0].result;
                 previewFrame.srcdoc = currentHtmlContent;
-                // htmlSourceTextarea.value = formatHtmlForTextarea(currentHtmlContent); // Prepara per vista sorgente
 
-                if (currentHtmlContent.includes("Nessun tag <form>")) { showStatus('Nessun form trovato.', 'info'); }
-                else if (currentHtmlContent.trim() === '' || (currentHtmlContent.includes("<!-- Form originale") && !currentHtmlContent.includes("<form"))) { showStatus('Nessun contenuto estraibile.', 'info'); previewFrame.srcdoc = '<p>Nessun contenuto.</p>'; }
-                else { showStatus('Estrazione completata!', 'success'); copyButton.disabled = false; saveButton.disabled = false; }
-                saveSessionState(); // Salva stato dopo estrazione riuscita
+                if (currentHtmlContent.includes("Nessuna form")) {
+                    showStatus('ℹ️ Nessun form trovato con l\'estrazione algoritmica.', 'info');
+                } else if (currentHtmlContent.trim() === '' || (currentHtmlContent.includes("<!-- Form originale") && !currentHtmlContent.includes("<form"))) {
+                    showStatus('ℹ️ Nessun contenuto estraibile con gli algoritmi.', 'info');
+                    previewFrame.srcdoc = '<p style="padding:20px; color:#666;">ℹ️ Nessun contenuto estraibile</p>';
+                } else {
+                    showStatus('🎉 Estrazione algoritmica completata!', 'success');
+                    copyButton.disabled = false;
+                    saveButton.disabled = false;
+                }
+                saveSessionState();
             } else {
-                showStatus('Errore estrazione (risultato).', 'error'); previewFrame.srcdoc = '<p>Errore estrazione</p>';
-                currentHtmlContent = '<p style="color:red">Errore estrazione.</p>'; // Salva un messaggio di errore
+                showStatus('❌ Errore estrazione algoritmica (risultato).', 'error');
+                previewFrame.srcdoc = '<p style="color:red; padding:20px;">❌ Errore estrazione</p>';
+                currentHtmlContent = '<p style="color:red">Errore estrazione.</p>';
                 saveSessionState();
             }
         } catch (error) {
-            showStatus(`Errore estrazione (script): ${error.message}`, 'error'); previewFrame.srcdoc = '<p>Errore script</p>';
+            showStatus(`❌ Errore estrazione algoritmica: ${error.message}`, 'error');
+            previewFrame.srcdoc = '<p style="color:red; padding:20px;">❌ Errore script</p>';
             currentHtmlContent = `<p style="color:red">Errore script estrazione: ${error.message}</p>`;
             saveSessionState();
         }
     });
 
-    // Estrazione Form con il supporto dell'AI
+    // Estrazione Form con AI
     extractFormsWithAiButton.addEventListener('click', async () => {
         // Verifica configurazione AI
         if (aiConfig.model === 'none' || !aiConfig.apiKey) {
-            showStatus('Configura AI (modello e API Key) prima di utilizzare l\'estrazione con AI.', 'warning', 7000);
+            showStatus('⚠️ Configura AI (modello e API Key) prima di utilizzare l\'estrazione con AI.', 'warning', 7000);
             aiConfigSection?.classList.add('open');
             saveSessionState();
-            aiConfigSection?.scrollIntoViewIfNeeded();
+            aiConfigSection?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             return;
         }
 
-        showStatus('Estrazione HTML dalla pagina...', 'info', 0);
+        showStatus('🤖 Estrazione HTML dalla pagina per analisi AI...', 'info', 0);
 
         // Reset dello stato
         currentHtmlContent = null;
-        previewFrame.srcdoc = '<p>Estrazione con AI in corso...</p>';
+        previewFrame.srcdoc = '<p style="padding:20px; text-align:center;">🤖 Estrazione AI in corso...</p>';
         htmlSourceTextarea.value = '';
         copyButton.disabled = true;
         saveButton.disabled = true;
@@ -816,7 +857,7 @@ Genera ora l'array JSON di mapping.`;
 
             saveSessionState();
 
-            showStatus(`Invio HTML a ${aiConfig.model} per estrazione form...`, 'info', 0);
+            showStatus(`🚀 Invio HTML a ${aiConfig.model} per estrazione form...`, 'info', 0);
             extractFormsWithAiButton.disabled = true;
 
             // 3. Crea il prompt con l'HTML della pagina
@@ -864,20 +905,20 @@ Genera ora l'array JSON di mapping.`;
             saveButton.disabled = false;
 
             if (currentHtmlContent.includes("Nessun")) {
-                showStatus('Nessun form trovato dall\'AI.', 'info');
+                showStatus('ℹ️ Nessun form trovato dall\'AI.', 'info');
             } else if (currentHtmlContent.trim() === '') {
-                showStatus('L\'AI non ha restituito contenuto valido.', 'warning');
+                showStatus('⚠️ L\'AI non ha restituito contenuto valido.', 'warning');
             } else {
-                showStatus(`Estrazione AI completata con ${selectedModel}! Form estratti e associati alle etichette.`, 'success');
+                showStatus(`🎉 Estrazione AI completata con ${selectedModel}! Form estratti e associati alle etichette.`, 'success');
             }
 
             saveSessionState();
 
         } catch (error) {
             console.error(`Errore estrazione AI (${aiConfig.model}):`, error);
-            showStatus(`Errore Estrazione AI (${aiConfig.model}): ${error.message}`, 'error', 10000);
+            showStatus(`❌ Errore Estrazione AI (${aiConfig.model}): ${error.message}`, 'error', 10000);
 
-            previewFrame.srcdoc = `<p style="color:red; padding:20px;">Errore estrazione AI: ${error.message}</p>`;
+            previewFrame.srcdoc = `<p style="color:red; padding:20px;">❌ Errore estrazione AI: ${error.message}</p>`;
             currentHtmlContent = `<p style="color:red;">Errore estrazione AI: ${error.message}</p>`;
             saveSessionState();
 
@@ -890,68 +931,127 @@ Genera ora l'array JSON di mapping.`;
     // Caricamento Dati JSON
     loadDataButton.addEventListener('click', () => { dataFileInput.click(); });
     dataFileInput.addEventListener('change', (event) => {
-        const file = event.target.files[0]; if (!file) return;
-        if (!file.name.endsWith('.json') && file.type !== 'application/json') { showStatus('Seleziona file .json valido.', 'error'); dataInput.value = ''; event.target.value = null; return; }
+        const file = event.target.files[0];
+        if (!file) return;
+        if (!file.name.endsWith('.json') && file.type !== 'application/json') {
+            showStatus('❌ Seleziona file .json valido.', 'error');
+            dataInput.value = '';
+            event.target.value = null;
+            return;
+        }
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const content = e.target.result;
-                JSON.parse(content); // Valida solo se è JSON, non lo pre-processa qui
-                dataInput.value = content; // Aggiorna textarea
-                showStatus(`File "${file.name}" caricato.`, 'success');
+                JSON.parse(content); // Valida solo se è JSON
+                dataInput.value = content;
+                showStatus(`📁 File "${file.name}" caricato.`, 'success');
                 // Resetta output AI se si caricano nuovi dati
                 aiOutputContainer.classList.add('hidden');
                 aiOutputTextarea.value = '';
                 assignAiValuesButton.disabled = true;
-                saveSessionState(); // Salva stato dopo caricamento
-            } catch (jsonError) { showStatus(`File "${file.name}" non è JSON valido: ${jsonError.message}`, 'error', 7000); dataInput.value = ''; }
+                saveSessionState();
+            } catch (jsonError) {
+                showStatus(`❌ File "${file.name}" non è JSON valido: ${jsonError.message}`, 'error', 7000);
+                dataInput.value = '';
+            }
         };
-        reader.onerror = (e) => { showStatus(`Errore lettura file "${file.name}".`, 'error'); dataInput.value = ''; };
-        reader.readAsText(file); event.target.value = null; // Permette di ricaricare lo stesso file
+        reader.onerror = (e) => {
+            showStatus(`❌ Errore lettura file "${file.name}".`, 'error');
+            dataInput.value = '';
+        };
+        reader.readAsText(file);
+        event.target.value = null;
     });
 
     // Mappa con AI
     mapWithAiButton.addEventListener('click', async () => {
-        if (aiConfig.model === 'none' || !aiConfig.apiKey) { showStatus('Configura AI (modello e API Key).', 'warning', 7000); aiConfigSection?.classList.add('open'); saveSessionState(); aiConfigSection?.scrollIntoViewIfNeeded(); return; }
-        if (!currentHtmlContent || currentHtmlContent.trim() === '') { showStatus('Estrai prima un form HTML.', 'warning'); return; }
-        const inputJsonString = dataInput.value.trim(); if (!inputJsonString) { showStatus('Carica o incolla i dati JSON per il mapping.', 'warning'); dataInput.focus(); return; }
-        try { const p = JSON.parse(inputJsonString); if (!Array.isArray(p) && typeof p !== 'object') throw new Error("Input non è JSON valido (array o oggetto)."); } // Leggermente più permissivo per l'input AI
-        catch (error) { showStatus(`JSON Input non valido per AI: ${error.message}`, 'error', 7000); dataInput.focus(); return; }
+        if (aiConfig.model === 'none' || !aiConfig.apiKey) {
+            showStatus('⚠️ Configura AI (modello e API Key).', 'warning', 7000);
+            aiConfigSection?.classList.add('open');
+            saveSessionState();
+            aiConfigSection?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            return;
+        }
+        if (!currentHtmlContent || currentHtmlContent.trim() === '') {
+            showStatus('⚠️ Estrai prima un form HTML.', 'warning');
+            return;
+        }
+        const inputJsonString = dataInput.value.trim();
+        if (!inputJsonString) {
+            showStatus('⚠️ Carica o incolla i dati JSON per il mapping.', 'warning');
+            dataInput.focus();
+            return;
+        }
+        try {
+            const p = JSON.parse(inputJsonString);
+            if (!Array.isArray(p) && typeof p !== 'object') throw new Error("Input non è JSON valido (array o oggetto).");
+        } catch (error) {
+            showStatus(`❌ JSON Input non valido per AI: ${error.message}`, 'error', 7000);
+            dataInput.focus();
+            return;
+        }
 
-        showStatus(`Invio dati a ${aiConfig.model}...`, 'info', 0);
-        aiOutputContainer.classList.add('hidden'); aiOutputTextarea.value = ''; assignAiValuesButton.disabled = true; mapWithAiButton.disabled = true;
-        saveSessionState(); // Salva lo stato prima della chiamata AI
+        showStatus(`🤖 Invio dati a ${aiConfig.model} per mapping semantico...`, 'info', 0);
+        aiOutputContainer.classList.add('hidden');
+        aiOutputTextarea.value = '';
+        assignAiValuesButton.disabled = true;
+        mapWithAiButton.disabled = true;
+        saveSessionState();
+        let llmResponseString = ''; // Define here to be accessible in catch/finally
 
         try {
             const prompt = createMappingPrompt(currentHtmlContent, inputJsonString);
-            let llmResponseString = ''; const selectedModel = aiConfig.model; const apiKey = aiConfig.apiKey; console.log(`Chiamata a ${selectedModel}.`);
-            if (selectedModel.startsWith('gemini-') || selectedModel.startsWith('gemma-')) { llmResponseString = await callGoogleApi(selectedModel, prompt, apiKey); }
-            else if (selectedModel.startsWith('openai-')) { const openAiModelName = selectedModel.substring('openai-'.length); llmResponseString = await callOpenAiApi(openAiModelName, prompt, apiKey); }
-            else { throw new Error('Modello AI non supportato.'); }
+            
+            const selectedModel = aiConfig.model;
+            const apiKey = aiConfig.apiKey;
+            console.log(`Chiamata a ${selectedModel}.`);
+            
+            if (selectedModel.startsWith('gemini-') || selectedModel.startsWith('gemma-')) {
+                llmResponseString = await callGoogleApi(selectedModel, prompt, apiKey);
+            } else if (selectedModel.startsWith('openai-')) {
+                const openAiModelName = selectedModel.substring('openai-'.length);
+                llmResponseString = await callOpenAiApi(openAiModelName, prompt, apiKey);
+            } else {
+                throw new Error('Modello AI non supportato.');
+            }
+            
             console.log(`Risposta grezza da ${selectedModel}.`);
             const suggestedMappingJson = extractJsonFromString(llmResponseString);
-            if (!suggestedMappingJson) { throw new Error(`L'AI (${selectedModel}) non ha restituito un JSON valido.`); }
-            if (!Array.isArray(suggestedMappingJson)) { throw new Error(`L'output dell'AI (${selectedModel}) non è un array JSON come richiesto.`); }
-            const isValidFormat = suggestedMappingJson.every(item => typeof item === 'object' && item !== null && 'id' in item && typeof item.id === 'string' && 'valore' in item);
-            if (!isValidFormat) { throw new Error(`Gli oggetti nell'array JSON dell'AI (${selectedModel}) non hanno il formato richiesto {id: string, valore: any}.`); }
+            
+            if (!suggestedMappingJson) {
+                throw new Error(`L'AI (${selectedModel}) non ha restituito un JSON valido. Risposta: ${llmResponseString}`);
+            }
+            if (!Array.isArray(suggestedMappingJson)) {
+                throw new Error(`L'output dell'AI (${selectedModel}) non è un array JSON come richiesto. Output: ${JSON.stringify(suggestedMappingJson)}`);
+            }
+            
+            const isValidFormat = suggestedMappingJson.every(item =>
+                typeof item === 'object' && item !== null &&
+                'id' in item && typeof item.id === 'string' &&
+                'valore' in item
+            );
+            
+            if (!isValidFormat) {
+                throw new Error(`Gli oggetti nell'array JSON dell'AI (${selectedModel}) non hanno il formato richiesto {id: string, valore: any}. Output: ${JSON.stringify(suggestedMappingJson)}`);
+            }
 
             aiOutputTextarea.value = JSON.stringify(suggestedMappingJson, null, 2);
             aiOutputContainer.classList.remove('hidden');
             assignAiValuesButton.disabled = false;
-            showStatus(`Mapping da ${selectedModel} completato. Verifica il JSON suggerito.`, 'success');
+            showStatus(`🎯 Mapping da ${selectedModel} completato. Verifica il JSON suggerito.`, 'success');
             aiOutputContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            saveSessionState(); // Salva stato dopo mapping riuscito
+            saveSessionState();
         } catch (error) {
             console.error(`Errore mapping AI (${aiConfig.model}):`, error);
-            showStatus(`Errore Mapping AI (${aiConfig.model}): ${error.message}`, 'error', 10000);
-            // Non nascondere aiOutputContainer qui, l'utente potrebbe voler vedere l'errore o un output parziale
-            // aiOutputContainer.classList.add('hidden');
-            aiOutputTextarea.value = `Errore: ${error.message}\n\nRisposta (se disponibile):\n${llmResponseString || 'Nessuna risposta ricevuta.'}`; // Mostra l'errore nella textarea
-            assignAiValuesButton.disabled = true;
-            saveSessionState(); // Salva lo stato di errore
+            showStatus(`❌ Errore Mapping AI (${aiConfig.model}): ${error.message}`, 'error', 10000);
+            aiOutputTextarea.value = `Errore: ${error.message}\n\nRisposta (se disponibile):\n${llmResponseString || 'Nessuna risposta ricevuta.'}`;
+            assignAiValuesButton.disabled = true; // Already true, but good to be explicit
+            // aiOutputContainer.classList.remove('hidden'); // Show error in textarea
+            saveSessionState();
         } finally {
             mapWithAiButton.disabled = false;
-            saveSessionState(); // Salva lo stato finale del bottone
+            saveSessionState();
         }
     });
 
@@ -959,42 +1059,42 @@ Genera ora l'array JSON di mapping.`;
     assignValuesButton.addEventListener('click', async () => {
         const jsonDataString = dataInput.value.trim();
         if (!jsonDataString) {
-            showStatus('Area dati JSON Input vuota. Carica o incolla dati.', 'warning');
+            showStatus('⚠️ Area dati JSON Input vuota. Carica o incolla dati.', 'warning');
             return;
         }
         let parsedJsonInput;
         try {
             parsedJsonInput = JSON.parse(jsonDataString);
         } catch (error) {
-            showStatus(`Errore parsing JSON Input: ${error.message}`, 'error', 7000);
+            showStatus(`❌ Errore parsing JSON Input: ${error.message}`, 'error', 7000);
             return;
         }
 
-        // *** ESEGUI PREPROCESSING QUI ***
+        // Esegui preprocessing
         const processedData = preprocessJsonForAssignment(parsedJsonInput);
 
         if (processedData.length === 0) {
-            showStatus('Nessuna coppia id/valore estraibile trovata nel JSON fornito con la struttura attesa.', 'warning', 7000);
+            showStatus('⚠️ Nessuna coppia id/valore estraibile trovata nel JSON fornito con la struttura attesa.', 'warning', 7000);
             return;
         }
-        await assignValuesToPage(processedData); // Usa i dati pre-processati
+        await assignValuesToPage(processedData);
     });
 
     // Assegna Valori (da Suggerimento AI)
     assignAiValuesButton.addEventListener('click', async () => {
         const aiJsonString = aiOutputTextarea.value.trim();
         if (!aiJsonString) {
-            showStatus('Nessun mapping JSON suggerito dall\'AI da assegnare.', 'warning');
+            showStatus('⚠️ Nessun mapping JSON suggerito dall\'AI da assegnare.', 'warning');
             return;
         }
         let parsedAiData;
         try {
-            parsedAiData = JSON.parse(aiJsonString); // L'output AI è atteso già nel formato corretto
+            parsedAiData = JSON.parse(aiJsonString);
         } catch (error) {
-            showStatus(`Errore parsing JSON suggerito dall'AI: ${error.message}`, 'error', 7000);
+            showStatus(`❌ Errore parsing JSON suggerito dall'AI: ${error.message}`, 'error', 7000);
             return;
         }
-        // NESSUN PREPROCESSING QUI per l'output AI
+        // NESSUN PREPROCESSING per l'output AI
         await assignValuesToPage(parsedAiData);
     });
 
@@ -1004,20 +1104,26 @@ Genera ora l'array JSON di mapping.`;
         const contentToCopy = isSourceView ? htmlSourceTextarea.value : formatHtmlForTextarea(currentHtmlContent || '');
         if (contentToCopy && !copyButton.disabled) {
             navigator.clipboard.writeText(contentToCopy)
-                .then(() => showStatus('HTML copiato negli appunti!', 'success'))
+                .then(() => showStatus('📋 HTML copiato negli appunti!', 'success'))
                 .catch(err => {
-                    showStatus('Errore durante la copia dell\'HTML.', 'error');
+                    showStatus('❌ Errore durante la copia dell\'HTML.', 'error');
                     console.error('Errore copia HTML:', err);
                     try {
                         const ta = document.createElement('textarea');
                         ta.value = contentToCopy;
-                        ta.style.position = 'fixed'; document.body.appendChild(ta);
-                        ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-                        showStatus('HTML copiato (fallback)!', 'success');
-                    } catch (e) { showStatus('Copia fallita.', 'error'); }
+                        ta.style.position = 'fixed';
+                        document.body.appendChild(ta);
+                        ta.focus();
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        showStatus('📋 HTML copiato (fallback)!', 'success');
+                    } catch (e) {
+                        showStatus('❌ Copia fallita.', 'error');
+                    }
                 });
         } else {
-            showStatus('Nessun HTML da copiare.', 'info');
+            showStatus('ℹ️ Nessun HTML da copiare.', 'info');
         }
     });
 
@@ -1029,30 +1135,36 @@ Genera ora l'array JSON di mapping.`;
             const pageName = pageNameInput.value.trim() || 'extracted_forms';
             const filename = sanitizeFilenameForSave(pageName) + '.html';
             const fileContent = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${pageName.replace(/</g, "<").replace(/>/g, ">")} - Forms Estratti</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.6;padding:20px;margin:0;background-color:#f4f4f4;color:#333}.form-container-wrapper>h3{color:#3498db;margin-top:20px;border-bottom:1px solid #eee;padding-bottom:8px;margin-bottom:15px}.form-container-wrapper>h3:first-of-type{margin-top:0}.form-container-wrapper>form{background-color:#fff;border:1px solid #ddd;border-radius:8px;padding:20px;margin-bottom:25px;box-shadow:0 2px 5px rgba(0,0,0,.1)}h2.main-title{text-align:center;color:#2c3e50;border-bottom:2px solid #3498db;padding-bottom:10px;margin-bottom:30px}label{display:block;margin-bottom:5px;font-weight:bold;color:#555}input[type=text],input[type=email],input[type=password],input[type=url],input[type=tel],input[type=number],input[type=date],input[type=time],input[type=search],textarea,select{display:block;width:95%;max-width:500px;padding:10px;margin-bottom:15px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;font-size:1em}input[type=checkbox],input[type=radio]{margin-right:8px;vertical-align:middle;margin-bottom:10px}label>input[type=checkbox],label>input[type=radio]{margin-bottom:0;display:inline-block;width:auto}fieldset{border:1px solid #ddd;padding:15px;margin-bottom:20px;border-radius:4px}legend{font-weight:bold;color:#3498db;padding:0 10px;margin-left:5px}table{width:100%;border-collapse:collapse;margin-bottom:15px}th,td{border:1px solid #eee;padding:8px;text-align:left;vertical-align:top}th{background-color:#f0f0f0;font-weight:bold}hr{margin:30px 0;border:0;border-top:2px dashed #ccc}td div,td span,td p{margin-bottom:5px}label+input,label+select,label+textarea{margin-top:2px}</style></head><body><h2 class="main-title">${pageName.replace(/</g, "<").replace(/>/g, ">")} - Forms Estratti</h2><div class="form-container-wrapper">${contentToSave}</div></body></html>`;
+            
             const blob = new Blob([fileContent], { type: 'text/html;charset=utf-8' });
             const url = URL.createObjectURL(blob);
+            
             chrome.downloads.download({ url: url, filename: filename, saveAs: true }, (downloadId) => {
                 if (chrome.runtime.lastError) {
                     console.error("Download failed:", chrome.runtime.lastError);
-                    showStatus(`Errore salvataggio: ${chrome.runtime.lastError.message}`, 'error');
+                    showStatus(`❌ Errore salvataggio: ${chrome.runtime.lastError.message}`, 'error');
                     try {
-                        const a = document.createElement('a'); a.href = url; a.download = filename;
-                        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                        showStatus(`File "${filename}" pronto (fallback).`, 'warning', 7000);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        showStatus(`💾 File "${filename}" pronto (fallback).`, 'warning', 7000);
                     } catch (e) {
-                        showStatus('Salvataggio fallito (fallback).', 'error');
+                        showStatus('❌ Salvataggio fallito (fallback).', 'error');
                         URL.revokeObjectURL(url);
                     }
                 } else if (downloadId) {
-                    showStatus(`Download "${filename}" avviato.`, 'success');
+                    showStatus(`💾 Download "${filename}" avviato.`, 'success');
                     URL.revokeObjectURL(url);
                 } else {
-                    showStatus(`Download "${filename}" non avviato. Controlla impostazioni browser.`, 'warning', 7000);
+                    showStatus(`⚠️ Download "${filename}" non avviato. Controlla impostazioni browser.`, 'warning', 7000);
                     URL.revokeObjectURL(url);
                 }
             });
         } else {
-            showStatus('Nessun HTML da salvare.', 'info');
+            showStatus('ℹ️ Nessun HTML da salvare.', 'info');
         }
     });
 
