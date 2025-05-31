@@ -30,9 +30,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const loadTextDataButton = document.getElementById('loadTextDataButton');
     const textDataFileInput = document.getElementById('textDataFileInput');
     const textDataInput = document.getElementById('textDataInput');
-    
+
     const mapWithAiButton = document.getElementById('mapWithAiButton'); // Unified
-    
+
     const aiOutputContainer = document.getElementById('aiOutputContainer'); // Unified
     const aiOutputTitle = document.getElementById('aiOutputTitle'); // Unified
     const aiOutputInfo = document.getElementById('aiOutputInfo'); // Unified
@@ -43,18 +43,117 @@ document.addEventListener('DOMContentLoaded', function () {
     // Collapsible Sections
     const aiConfigSection = document.getElementById('aiConfigSection');
     const extractionSection = document.getElementById('extractionSection');
-    // fillingSection is now fillingAndMappingSection
+
+    // Loading overlay
+    const loadingOverlay = document.getElementById('loadingOverlay');
 
     // --- Stato Interno (Defaults) ---
     let currentHtmlContent = null;
     let aiConfig = { model: 'none', apiKey: '' };
-    const AI_CONFIG_KEY = 'ai_config_v3'; 
-    const SESSION_STATE_KEY = 'popup_session_state_v3'; 
+    let debugMode = true; // Default
+    const AI_CONFIG_KEY = 'ai_config_v3';
+    const SESSION_STATE_KEY = 'popup_session_state_v3';
+
+    // ===========================================
+    // --- DEBUG MODE FUNCTIONALITY ---
+    // ===========================================
+
+    /**
+     * Ottiene la modalità debug dal manifest
+     * @returns {Promise<boolean>} true se in modalità debug, false altrimenti
+     */
+    async function getDebugMode() {
+        try {
+            const manifest = chrome.runtime.getManifest();
+            return manifest.debug_mode === true; // Default true se non specificato
+        } catch (error) {
+            console.error('Errore lettura manifest:', error);
+            return true; // Default debug mode
+        }
+    }
+
+    /**
+     * Inizializza l'UI in base alla modalità
+     */
+    async function loadConfig() {
+        try {
+            const response = await fetch(chrome.runtime.getURL('config.json'));
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const config = await response.json();
+            return config;
+        } catch (error) {
+            console.error("Could not load config.json:", error);
+            return null; // o un oggetto di default
+        }
+    }
+
+    /**
+     * Inizializza l'UI in base alla modalità
+     */
+    async function initializeUIMode() {
+        const appConfig = await loadConfig();
+        debugMode = appConfig && appConfig.debug_mode;
+
+        if (debugMode) {
+            debugLog('🔧 MODALITÀ DEBUG ATTIVA');
+            document.body.classList.remove('production-mode');
+        } else {
+            console.log('🚀 MODALITÀ PRODUZIONE ATTIVA');
+            document.body.classList.add('production-mode');
+            // In produzione, apri automaticamente la sezione di compilazione
+            fillingAndMappingSection?.classList.add('open');
+        }
+    }
+
+    /**
+     * Log condizionale basato sulla modalità
+     */
+    function debugLog(...args) {
+        if (debugMode) {
+            console.log('[DEBUG]', ...args);
+        }
+    }
+
+    /**
+     * Mostra/nasconde loading overlay (solo in produzione)
+     */
+    function setLoading(show, text = 'Elaborazione in corso...') {
+        if (!debugMode && loadingOverlay) {
+            if (show) {
+                loadingOverlay.querySelector('.loading-text').textContent = text;
+                loadingOverlay.classList.remove('hidden');
+            } else {
+                loadingOverlay.classList.add('hidden');
+            }
+        }
+    }
 
     // ===========================================
     // --- Funzioni Helper (Definizioni Chiave) ---
     // ===========================================
     function showStatus(message, type = 'info', duration = 5000) {
+        // In modalità produzione, semplifica i messaggi tecnici
+        if (!debugMode) {
+            // Sostituisci messaggi tecnici con versioni user-friendly
+            const userFriendlyMessages = {
+                '🔧 Estrazione algoritmica in corso...': '⏳ Analisi della pagina in corso...',
+                '🤖 Estrazione HTML per analisi AI...': '🤖 Analisi intelligente in corso...',
+                '⚡ Assegnazione valori in corso nella pagina...': '✏️ Compilazione automatica in corso...',
+                '🤖 Invio dati (JSON) a': '🤖 Elaborazione intelligente dei dati...',
+                '🤖 Invio dati (Testo) a': '🤖 Interpretazione del testo in corso...'
+            };
+
+            // Cerca corrispondenze parziali
+            for (const [technical, friendly] of Object.entries(userFriendlyMessages)) {
+                if (message.includes(technical.split('...')[0])) {
+                    message = friendly;
+                    break;
+                }
+            }
+        }
+
         statusMessage.textContent = message;
         statusMessage.className = ''; // Reset classes
         statusMessage.classList.add(`status-${type}`);
@@ -67,7 +166,151 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }, duration);
         } else {
-             statusMessage.classList.add(`status-permanent`);
+            statusMessage.classList.add(`status-permanent`);
+        }
+    }
+
+    /**
+     * Esegue automaticamente l'estrazione form se necessario
+     * @returns {Promise<boolean>} true se l'estrazione ha avuto successo
+     */
+    async function ensureFormExtracted() {
+        if (currentHtmlContent && currentHtmlContent.trim() !== '') {
+            debugLog('Form già estratti, skip estrazione automatica');
+            return true;
+        }
+
+        debugLog('Form non estratti, avvio estrazione automatica');
+        setLoading(true, 'Analisi della pagina in corso...');
+
+        try {
+            // Prova prima con AI se configurata
+            if (aiConfig.model !== 'none' && aiConfig.apiKey) {
+                debugLog('Tentativo estrazione AI automatica');
+                const success = await performAiExtraction(true); // silent mode
+                if (success) {
+                    setLoading(false);
+                    return true;
+                }
+            }
+
+            // Fallback ad estrazione algoritmica
+            debugLog('Fallback ad estrazione algoritmica');
+            const success = await performAlgorithmicExtraction(true); // silent mode
+            setLoading(false);
+            return success;
+
+        } catch (error) {
+            debugLog('Errore durante estrazione automatica:', error);
+            setLoading(false);
+            showStatus('❌ Errore durante l\'analisi della pagina. Riprova.', 'error');
+            return false;
+        }
+    }
+
+    /**
+     * Esegue l'estrazione algoritmica
+     * @param {boolean} silent - Se true, non mostra messaggi di stato dettagliati
+     * @returns {Promise<boolean>} true se successo
+     */
+    async function performAlgorithmicExtraction(silent = false) {
+        if (!silent) {
+            showStatus('🔧 Estrazione algoritmica in corso...', 'info', 0);
+        }
+
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!tab || !tab.id) {
+            if (!silent) showStatus('❌ Errore scheda attiva.', 'error');
+            return false;
+        }
+
+        try {
+            const results = await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: () => window.extractAndSimplifyForms_content()
+            });
+
+            if (results && results[0] && typeof results[0].result === 'string') {
+                currentHtmlContent = results[0].result;
+
+                if (debugMode) {
+                    previewFrame.srcdoc = currentHtmlContent;
+                    copyButton.disabled = false;
+                    saveButton.disabled = false;
+                }
+
+                if (!silent) {
+                    if (currentHtmlContent.includes("Nessuna form")) {
+                        showStatus('ℹ️ Nessun form trovato.', 'info');
+                    } else {
+                        showStatus('🎉 Estrazione completata!', 'success');
+                    }
+                }
+
+                saveSessionState();
+                return true;
+            }
+
+            return false;
+        } catch (error) {
+            debugLog('Errore estrazione algoritmica:', error);
+            if (!silent) showStatus(`❌ Errore estrazione: ${error.message}`, 'error');
+            return false;
+        }
+    }
+
+    /**
+     * Esegue l'estrazione AI
+     * @param {boolean} silent - Se true, non mostra messaggi di stato dettagliati
+     * @returns {Promise<boolean>} true se successo
+     */
+    async function performAiExtraction(silent = false) {
+        if (aiConfig.model === 'none' || !aiConfig.apiKey) {
+            if (!silent) {
+                showStatus('⚠️ Configura AI per utilizzare l\'estrazione intelligente.', 'warning');
+            }
+            return false;
+        }
+
+        if (!silent) {
+            showStatus('🤖 Estrazione AI in corso...', 'info', 0);
+        }
+
+        try {
+            const pageData = await extractPageHTML();
+            const prompt = createFormExtractionPrompt(pageData.html, pageData.title);
+
+            let aiResponseHtml = '';
+            if (aiConfig.model.startsWith('gemini-') || aiConfig.model.startsWith('gemma-')) {
+                aiResponseHtml = await callGoogleApi(aiConfig.model, prompt, aiConfig.apiKey);
+            } else if (aiConfig.model.startsWith('openai-')) {
+                aiResponseHtml = await callOpenAiApi(aiConfig.model.substring('openai-'.length), prompt, aiConfig.apiKey);
+            }
+
+            let cleanedHtml = aiResponseHtml.trim();
+            if (cleanedHtml.startsWith('```html')) {
+                cleanedHtml = cleanedHtml.replace(/^```html\s*/, '').replace(/\s*```$/, '');
+            }
+
+            currentHtmlContent = cleanedHtml;
+
+            if (debugMode) {
+                previewFrame.srcdoc = currentHtmlContent;
+                copyButton.disabled = false;
+                saveButton.disabled = false;
+            }
+
+            if (!silent) {
+                showStatus('🎉 Analisi AI completata!', 'success');
+            }
+
+            saveSessionState();
+            return true;
+
+        } catch (error) {
+            debugLog('Errore estrazione AI:', error);
+            if (!silent) showStatus(`❌ Errore AI: ${error.message}`, 'error');
+            return false;
         }
     }
 
@@ -460,7 +703,7 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
                 if (assignmentsCount > 0 && notFoundCount === 0) statusType = 'success';
                 else if (assignmentsCount > 0 && notFoundCount > 0) { statusType = 'warning'; statusMsg += " Alcuni campi non trovati o con errori."; }
                 else if (assignmentsCount === 0 && notFoundCount > 0) { statusType = 'error'; statusMsg = `❌ Assegnazione fallita. Nessun campo trovato o compilato. Errori/Non Trovati: ${notFoundCount}.`; }
-                if (errorMessages && errorMessages.length > 0) console.warn("Dettagli assegnazione (errori/non trovati):", errorMessages);
+                if (errorMessages && errorMessages.length > 0) debugLog("Dettagli assegnazione (errori/non trovati):", errorMessages);
                 showStatus(statusMsg, statusType, 7000);
             } else {
                 console.error("Risultato inatteso dall'assegnazione:", results);
@@ -499,7 +742,7 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
         }
     }
 
-    function preprocessJsonForDirectAssignment(parsedJsonInput) { 
+    function preprocessJsonForDirectAssignment(parsedJsonInput) {
         const extractedPairs = [];
         if (Array.isArray(parsedJsonInput) && parsedJsonInput.every(item =>
             typeof item === 'object' && item !== null &&
@@ -509,7 +752,7 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
             return parsedJsonInput.map(item => ({ id: item.id, valore: item.valore }));
         }
         const commonInnerArrayKeys = ['campi', 'fields', 'items', 'data', 'elements', 'values'];
-        if (Array.isArray(parsedJsonInput)) { 
+        if (Array.isArray(parsedJsonInput)) {
             parsedJsonInput.forEach(section => {
                 if (typeof section === 'object' && section !== null) {
                     for (const key of commonInnerArrayKeys) {
@@ -525,8 +768,8 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
                     }
                 }
             });
-        } else if (typeof parsedJsonInput === 'object' && parsedJsonInput !== null) { 
-             for (const key of commonInnerArrayKeys) {
+        } else if (typeof parsedJsonInput === 'object' && parsedJsonInput !== null) {
+            for (const key of commonInnerArrayKeys) {
                 if (key in parsedJsonInput && Array.isArray(parsedJsonInput[key])) {
                     parsedJsonInput[key].forEach(field => {
                         if (typeof field === 'object' && field !== null &&
@@ -602,14 +845,14 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
             pageName: pageNameInput.value,
             htmlContent: currentHtmlContent,
             viewMode: document.querySelector('input[name="viewMode"]:checked')?.value || 'preview',
-            
+
             selectedDataType: dataTypeSelect.value,
             jsonData: jsonDataInput.value,
             textData: textDataInput.value,
-            
+
             aiOutputData: aiOutputTextarea.value,
             isAiOutputVisible: !aiOutputContainer.classList.contains('hidden'),
-            
+
             aiConfigOpen: aiConfigSection?.classList.contains('open'),
             extractionOpen: extractionSection?.classList.contains('open'),
             fillingAndMappingOpen: fillingAndMappingSection?.classList.contains('open')
@@ -625,63 +868,82 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
         try {
             const result = await chrome.storage.session.get(SESSION_STATE_KEY);
             const savedState = result[SESSION_STATE_KEY];
-            
+
             extractFormsWithAiButton.disabled = false;
             mapWithAiButton.disabled = false;
 
             if (savedState) {
                 pageNameInput.value = savedState.pageName || '';
                 currentHtmlContent = savedState.htmlContent || null;
-                
+
                 dataTypeSelect.value = savedState.selectedDataType || 'json';
                 jsonDataInput.value = savedState.jsonData || '';
                 textDataInput.value = savedState.textData || '';
-                
-                aiOutputTextarea.value = savedState.aiOutputData || '';
 
-                if (currentHtmlContent) {
-                    previewFrame.srcdoc = currentHtmlContent;
-                    htmlSourceTextarea.value = formatHtmlForTextarea(currentHtmlContent);
-                    copyButton.disabled = false;
-                    saveButton.disabled = false;
-                } else {
-                    previewFrame.srcdoc = ''; htmlSourceTextarea.value = '';
-                    copyButton.disabled = true; saveButton.disabled = true;
+                if (debugMode) {
+                    aiOutputTextarea.value = savedState.aiOutputData || '';
+
+                    if (currentHtmlContent) {
+                        previewFrame.srcdoc = currentHtmlContent;
+                        htmlSourceTextarea.value = formatHtmlForTextarea(currentHtmlContent);
+                        copyButton.disabled = false;
+                        saveButton.disabled = false;
+                    } else {
+                        previewFrame.srcdoc = ''; htmlSourceTextarea.value = '';
+                        copyButton.disabled = true; saveButton.disabled = true;
+                    }
+
+                    const savedViewMode = savedState.viewMode || 'preview';
+                    document.querySelector(`input[name="viewMode"][value="${savedViewMode}"]`).checked = true;
+                    previewFrame.classList.toggle('hidden', savedViewMode === 'source');
+                    htmlSourceTextarea.classList.toggle('hidden', savedViewMode === 'preview');
+                    applySourceChangesButton.classList.toggle('hidden', savedViewMode === 'preview');
+
+                    const isAiVisible = savedState.isAiOutputVisible || false;
+                    aiOutputContainer.classList.toggle('hidden', !isAiVisible);
+                    applyAiMappingButton.disabled = !isAiVisible || !aiOutputTextarea.value;
+                    resetAiMappingButton.disabled = !isAiVisible;
                 }
 
-                const savedViewMode = savedState.viewMode || 'preview';
-                document.querySelector(`input[name="viewMode"][value="${savedViewMode}"]`).checked = true;
-                previewFrame.classList.toggle('hidden', savedViewMode === 'source');
-                htmlSourceTextarea.classList.toggle('hidden', savedViewMode === 'preview');
-                applySourceChangesButton.classList.toggle('hidden', savedViewMode === 'preview');
+                updateDataTypeUi(dataTypeSelect.value, false);
 
-                const isAiVisible = savedState.isAiOutputVisible || false;
-                aiOutputContainer.classList.toggle('hidden', !isAiVisible);
-                applyAiMappingButton.disabled = !isAiVisible || !aiOutputTextarea.value;
-                resetAiMappingButton.disabled = !isAiVisible;
-                
-                updateDataTypeUi(dataTypeSelect.value, false); 
-
-                aiConfigSection?.classList.toggle('open', !!savedState.aiConfigOpen);
-                extractionSection?.classList.toggle('open', savedState.extractionOpen !== false); 
-                fillingAndMappingSection?.classList.toggle('open', !!savedState.fillingAndMappingOpen);
+                // In modalità produzione, mantieni le sezioni più chiuse per default
+                if (!debugMode) {
+                    aiConfigSection?.classList.toggle('open', !!savedState.aiConfigOpen);
+                    extractionSection?.classList.remove('open'); // Sempre chiuso in produzione
+                    fillingAndMappingSection?.classList.add('open'); // Sempre aperto in produzione
+                } else {
+                    aiConfigSection?.classList.toggle('open', !!savedState.aiConfigOpen);
+                    extractionSection?.classList.toggle('open', savedState.extractionOpen !== false);
+                    fillingAndMappingSection?.classList.toggle('open', !!savedState.fillingAndMappingOpen);
+                }
 
                 showStatus('🔄 Stato sessione precedente ripristinato.', 'info', 3000);
-            } else { 
-                copyButton.disabled = true; saveButton.disabled = true;
-                applyAiMappingButton.disabled = true; resetAiMappingButton.disabled = true;
-                aiOutputContainer.classList.add('hidden');
-                updateDataTypeUi('json', false); 
-                aiConfigSection?.classList.remove('open');
-                extractionSection?.classList.add('open'); 
-                fillingAndMappingSection?.classList.remove('open');
+            } else {
+                if (debugMode) {
+                    copyButton.disabled = true; saveButton.disabled = true;
+                    applyAiMappingButton.disabled = true; resetAiMappingButton.disabled = true;
+                    aiOutputContainer.classList.add('hidden');
+                    aiConfigSection?.classList.remove('open');
+                    extractionSection?.classList.add('open');
+                    fillingAndMappingSection?.classList.remove('open');
+                } else {
+                    aiConfigSection?.classList.remove('open');
+                    fillingAndMappingSection?.classList.add('open');
+                }
+                updateDataTypeUi('json', false);
             }
         } catch (error) {
             console.error("Error loading session state:", error);
             showStatus('❌ Errore nel caricamento dello stato della sessione.', 'error');
-            aiConfigSection?.classList.remove('open');
-            extractionSection?.classList.add('open');
-            fillingAndMappingSection?.classList.remove('open');
+            if (debugMode) {
+                aiConfigSection?.classList.remove('open');
+                extractionSection?.classList.add('open');
+                fillingAndMappingSection?.classList.remove('open');
+            } else {
+                aiConfigSection?.classList.remove('open');
+                fillingAndMappingSection?.classList.add('open');
+            }
             updateDataTypeUi('json', false);
         }
     }
@@ -705,7 +967,7 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
             if (result[AI_CONFIG_KEY]) {
                 aiConfig = result[AI_CONFIG_KEY];
                 llmModelSelect.value = Array.from(llmModelSelect.options).some(opt => opt.value === aiConfig.model) ? aiConfig.model : 'none';
-                if (llmModelSelect.value === 'none') aiConfig.model = 'none'; 
+                if (llmModelSelect.value === 'none') aiConfig.model = 'none';
                 apiKeyInput.value = aiConfig.apiKey || '';
             }
         } catch (error) {
@@ -738,122 +1000,45 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
     jsonDataInput.addEventListener('input', saveSessionState);
     textDataInput.addEventListener('input', saveSessionState);
 
-    viewModeRadios.forEach(radio => {
-        radio.addEventListener('change', function () {
-            applySourceChangesButton.classList.toggle('hidden', this.value === 'preview');
-            previewFrame.classList.toggle('hidden', this.value === 'source');
-            htmlSourceTextarea.classList.toggle('hidden', this.value === 'preview');
-            if (this.value === 'preview') previewFrame.srcdoc = currentHtmlContent || '';
-            else htmlSourceTextarea.value = formatHtmlForTextarea(currentHtmlContent || '');
+    if (debugMode) {
+        viewModeRadios.forEach(radio => {
+            radio.addEventListener('change', function () {
+                applySourceChangesButton.classList.toggle('hidden', this.value === 'preview');
+                previewFrame.classList.toggle('hidden', this.value === 'source');
+                htmlSourceTextarea.classList.toggle('hidden', this.value === 'preview');
+                if (this.value === 'preview') previewFrame.srcdoc = currentHtmlContent || '';
+                else htmlSourceTextarea.value = formatHtmlForTextarea(currentHtmlContent || '');
+                saveSessionState();
+            });
+        });
+
+        applySourceChangesButton.addEventListener('click', () => {
+            currentHtmlContent = cleanHtmlFromTextareaFormatting(htmlSourceTextarea.value);
+            previewFrame.srcdoc = currentHtmlContent;
+            htmlSourceTextarea.value = formatHtmlForTextarea(currentHtmlContent);
+            showStatus('✅ Modifiche codice sorgente applicate.', 'success');
             saveSessionState();
         });
-    });
-
-    applySourceChangesButton.addEventListener('click', () => {
-        currentHtmlContent = cleanHtmlFromTextareaFormatting(htmlSourceTextarea.value);
-        previewFrame.srcdoc = currentHtmlContent;
-        htmlSourceTextarea.value = formatHtmlForTextarea(currentHtmlContent); 
-        showStatus('✅ Modifiche codice sorgente applicate.', 'success');
-        saveSessionState();
-    });
+    }
 
     extractFormsButton.addEventListener('click', async () => {
-        showStatus('🔧 Estrazione algoritmica in corso...', 'info', 0);
-        currentHtmlContent = null;
-        previewFrame.srcdoc = '<p style="padding:20px; text-align:center;">🔧 Estrazione...</p>';
-        htmlSourceTextarea.value = '';
-        copyButton.disabled = true; saveButton.disabled = true;
-        aiOutputTextarea.value = '';
-        aiOutputContainer.classList.add('hidden');
-        applyAiMappingButton.disabled = true;
-        resetAiMappingButton.disabled = true;
-
-        document.querySelector('input[name="viewMode"][value="preview"]').checked = true;
-        previewFrame.classList.remove('hidden'); htmlSourceTextarea.classList.add('hidden'); applySourceChangesButton.classList.add('hidden');
-
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (!tab || !tab.id) {
-            showStatus('❌ Errore scheda attiva.', 'error'); previewFrame.srcdoc = '<p style="color:red; padding:20px;">❌ Errore scheda</p>'; return;
-        }
-        if (!pageNameInput.value && tab.title) pageNameInput.value = sanitizeFilenameForSave(tab.title);
-        else if (!pageNameInput.value) pageNameInput.value = 'pagina_estratta_algoritmica';
-        saveSessionState();
-
-        try {
-            const results = await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                func: () => window.extractAndSimplifyForms_content() 
-            });
-            if (results && results[0] && typeof results[0].result === 'string') {
-                currentHtmlContent = results[0].result;
-                previewFrame.srcdoc = currentHtmlContent;
-                if (currentHtmlContent.includes("Nessuna form")) showStatus('ℹ️ Nessun form trovato.', 'info');
-                else if (currentHtmlContent.trim() === '' || (currentHtmlContent.includes("<!-- Form originale") && !currentHtmlContent.includes("<form"))) {
-                    showStatus('ℹ️ Nessun contenuto estraibile.', 'info'); previewFrame.srcdoc = '<p style="padding:20px; color:#666;">ℹ️ Nessun contenuto</p>';
-                } else {
-                    showStatus('🎉 Estrazione algoritmica completata!', 'success'); copyButton.disabled = false; saveButton.disabled = false;
-                }
-            } else {
-                showStatus('❌ Errore estrazione (risultato).', 'error'); previewFrame.srcdoc = '<p style="color:red; padding:20px;">❌ Errore</p>'; currentHtmlContent = '<p style="color:red">Errore.</p>';
-            }
-        } catch (error) {
-            showStatus(`❌ Errore estrazione: ${error.message}`, 'error'); previewFrame.srcdoc = '<p style="color:red; padding:20px;">❌ Errore script</p>'; currentHtmlContent = `<p style="color:red">Errore: ${error.message}</p>`;
-        } finally {
-            saveSessionState();
-        }
+        await performAlgorithmicExtraction(false);
     });
 
     extractFormsWithAiButton.addEventListener('click', async () => {
         if (aiConfig.model === 'none' || !aiConfig.apiKey) {
             showStatus('⚠️ Configura AI (modello e API Key).', 'warning', 7000);
-            aiConfigSection?.classList.add('open'); saveSessionState(); aiConfigSection?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); return;
-        }
-        showStatus('🤖 Estrazione HTML per analisi AI...', 'info', 0);
-        currentHtmlContent = null;
-        previewFrame.srcdoc = '<p style="padding:20px; text-align:center;">🤖 Estrazione AI...</p>';
-        htmlSourceTextarea.value = '';
-        copyButton.disabled = true; saveButton.disabled = true;
-        aiOutputTextarea.value = '';
-        aiOutputContainer.classList.add('hidden');
-        applyAiMappingButton.disabled = true;
-        resetAiMappingButton.disabled = true;
-
-        document.querySelector('input[name="viewMode"][value="preview"]').checked = true;
-        previewFrame.classList.remove('hidden'); htmlSourceTextarea.classList.add('hidden'); applySourceChangesButton.classList.add('hidden');
-        extractFormsWithAiButton.disabled = true;
-
-        try {
-            const pageData = await extractPageHTML();
-            if (!pageNameInput.value && pageData.title) pageNameInput.value = sanitizeFilenameForSave(pageData.title);
-            else if (!pageNameInput.value) pageNameInput.value = 'pagina_estratta_ai';
+            aiConfigSection?.classList.add('open');
             saveSessionState();
+            aiConfigSection?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            return;
+        }
 
-            showStatus(`🚀 Invio HTML a ${aiConfig.model} per estrazione...`, 'info', 0);
-            const prompt = createFormExtractionPrompt(pageData.html, pageData.title);
-            let aiResponseHtml = '';
-            if (aiConfig.model.startsWith('gemini-') || aiConfig.model.startsWith('gemma-')) {
-                aiResponseHtml = await callGoogleApi(aiConfig.model, prompt, aiConfig.apiKey);
-            } else if (aiConfig.model.startsWith('openai-')) {
-                aiResponseHtml = await callOpenAiApi(aiConfig.model.substring('openai-'.length), prompt, aiConfig.apiKey);
-            } else throw new Error('Modello AI non supportato.');
-
-            let cleanedHtml = aiResponseHtml.trim();
-            if (cleanedHtml.startsWith('```html')) cleanedHtml = cleanedHtml.replace(/^```html\s*/, '').replace(/\s*```$/, '');
-            else if (cleanedHtml.startsWith('```')) cleanedHtml = cleanedHtml.replace(/^```\s*/, '').replace(/\s*```$/, '');
-            if (!cleanedHtml.includes('<') || !cleanedHtml.includes('>')) throw new Error('Risposta AI non contiene HTML valido.');
-
-            currentHtmlContent = cleanedHtml;
-            previewFrame.srcdoc = currentHtmlContent;
-            copyButton.disabled = false; saveButton.disabled = false;
-            if (currentHtmlContent.includes("Nessun")) showStatus('ℹ️ Nessun form trovato dall\'AI.', 'info');
-            else if (currentHtmlContent.trim() === '') showStatus('⚠️ L\'AI non ha restituito contenuto valido.', 'warning');
-            else showStatus(`🎉 Estrazione AI con ${aiConfig.model} completata!`, 'success');
-
-        } catch (error) {
-            showStatus(`❌ Errore Estrazione AI (${aiConfig.model}): ${error.message}`, 'error', 10000);
-            previewFrame.srcdoc = `<p style="color:red; padding:20px;">❌ Errore: ${error.message}</p>`; currentHtmlContent = `<p style="color:red;">Errore: ${error.message}</p>`;
+        extractFormsWithAiButton.disabled = true;
+        try {
+            await performAiExtraction(false);
         } finally {
-            extractFormsWithAiButton.disabled = false; saveSessionState();
+            extractFormsWithAiButton.disabled = false;
         }
     });
 
@@ -870,15 +1055,17 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
         reader.onload = (e) => {
             try {
                 const content = e.target.result;
-                if (acceptedExtension === '.json') { 
+                if (acceptedExtension === '.json') {
                     JSON.parse(content);
                 }
                 targetTextarea.value = content;
                 showStatus(`📁 File "${file.name}" caricato per ${statusPrefix}.`, 'success');
-                aiOutputTextarea.value = '';
-                aiOutputContainer.classList.add('hidden');
-                applyAiMappingButton.disabled = true;
-                resetAiMappingButton.disabled = true;
+                if (debugMode) {
+                    aiOutputTextarea.value = '';
+                    aiOutputContainer.classList.add('hidden');
+                    applyAiMappingButton.disabled = true;
+                    resetAiMappingButton.disabled = true;
+                }
                 saveSessionState();
             } catch (jsonError) {
                 showStatus(`❌ File "${file.name}" non è JSON valido: ${jsonError.message}`, 'error', 7000);
@@ -890,7 +1077,7 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
             targetTextarea.value = '';
         };
         reader.readAsText(file);
-        event.target.value = null; 
+        event.target.value = null;
     }
 
     loadJsonDataButton.addEventListener('click', () => { jsonDataFileInput.click(); });
@@ -902,17 +1089,16 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
     textDataFileInput.addEventListener('change', (event) => {
         handleLoadFile(event, textDataInput, '.txt', 'text/plain', 'Text Input');
     });
-    
+
     function updateDataTypeUi(selectedType, resetAiOutput = true) {
         const isJsonSelected = selectedType === 'json';
         jsonDataUiContainer.classList.toggle('hidden', !isJsonSelected);
         textDataUiContainer.classList.toggle('hidden', isJsonSelected);
-        
+
         // Mostra/nascondi il pulsante "Assegnazione Diretta (da JSON)"
         assignDirectJsonValuesButton.classList.toggle('hidden', !isJsonSelected);
 
-
-        if (resetAiOutput) {
+        if (debugMode && resetAiOutput) {
             aiOutputTextarea.value = '';
             aiOutputContainer.classList.add('hidden');
             applyAiMappingButton.disabled = true;
@@ -928,10 +1114,26 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
     mapWithAiButton.addEventListener('click', async () => {
         if (aiConfig.model === 'none' || !aiConfig.apiKey) {
             showStatus('⚠️ Configura AI (modello e API Key).', 'warning', 7000);
-            aiConfigSection?.classList.add('open'); saveSessionState(); aiConfigSection?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); return;
+            aiConfigSection?.classList.add('open');
+            saveSessionState();
+            aiConfigSection?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            return;
         }
+
+        // In modalità produzione, estrai automaticamente se necessario
+        if (!debugMode) {
+            const extractionSuccess = await ensureFormExtracted();
+            if (!extractionSuccess) {
+                return;
+            }
+        }
+
         if (!currentHtmlContent || currentHtmlContent.trim() === '') {
-            showStatus('⚠️ Estrai prima un form HTML.', 'warning'); extractionSection?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); return;
+            showStatus('⚠️ Estrai prima un form HTML.', 'warning');
+            if (debugMode) {
+                extractionSection?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            return;
         }
 
         const selectedDataType = dataTypeSelect.value;
@@ -942,30 +1144,51 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
         if (selectedDataType === 'json') {
             inputDataString = jsonDataInput.value.trim();
             if (!inputDataString) {
-                showStatus('⚠️ Carica o incolla dati JSON.', 'warning'); jsonDataInput.focus(); return;
+                showStatus('⚠️ Carica o incolla dati JSON.', 'warning');
+                jsonDataInput.focus();
+                return;
             }
-            try { JSON.parse(inputDataString); } 
-            catch (error) { showStatus(`❌ JSON Input non valido: ${error.message}`, 'error', 7000); jsonDataInput.focus(); return; }
+            try {
+                JSON.parse(inputDataString);
+            } catch (error) {
+                showStatus(`❌ JSON Input non valido: ${error.message}`, 'error', 7000);
+                jsonDataInput.focus();
+                return;
+            }
             promptFunction = createJsonMappingPrompt;
             inputTypeForStatus = 'JSON';
-            aiOutputTitle.textContent = "🎯 Mapping Dati (da JSON) Suggerito dall'AI";
-            aiOutputInfo.textContent = "L'AI ha analizzato i tuoi dati JSON e i campi del form per creare il mapping ottimale.";
+            if (debugMode) {
+                aiOutputTitle.textContent = "🎯 Mapping Dati (da JSON) Suggerito dall'AI";
+                aiOutputInfo.textContent = "L'AI ha analizzato i tuoi dati JSON e i campi del form per creare il mapping ottimale.";
+            }
         } else { // 'text'
             inputDataString = textDataInput.value.trim();
             if (!inputDataString) {
-                showStatus('⚠️ Incolla o carica del testo per il mapping.', 'warning'); textDataInput.focus(); return;
+                showStatus('⚠️ Incolla o carica del testo per il mapping.', 'warning');
+                textDataInput.focus();
+                return;
             }
             promptFunction = createTextToFormMappingPrompt;
             inputTypeForStatus = 'Testo';
-            aiOutputTitle.textContent = "🎯 Mapping Dati (da Testo) Suggerito dall'AI";
-            aiOutputInfo.textContent = "L'AI ha analizzato il testo fornito e i campi del form per estrarre valori e creare il mapping.";
+            if (debugMode) {
+                aiOutputTitle.textContent = "🎯 Mapping Dati (da Testo) Suggerito dall'AI";
+                aiOutputInfo.textContent = "L'AI ha analizzato il testo fornito e i campi del form per estrarre valori e creare il mapping.";
+            }
         }
 
         showStatus(`🤖 Invio dati (${inputTypeForStatus}) a ${aiConfig.model} per mapping...`, 'info', 0);
-        aiOutputTextarea.value = ''; 
-        aiOutputContainer.classList.add('hidden'); 
-        applyAiMappingButton.disabled = true;
-        resetAiMappingButton.disabled = true;
+
+        if (!debugMode) {
+            setLoading(true, 'Elaborazione intelligente dei dati...');
+        }
+
+        if (debugMode) {
+            aiOutputTextarea.value = '';
+            aiOutputContainer.classList.add('hidden');
+            applyAiMappingButton.disabled = true;
+            resetAiMappingButton.disabled = true;
+        }
+
         mapWithAiButton.disabled = true;
         let llmResponseString = '';
 
@@ -975,109 +1198,181 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
                 llmResponseString = await callGoogleApi(aiConfig.model, prompt, aiConfig.apiKey);
             } else if (aiConfig.model.startsWith('openai-')) {
                 llmResponseString = await callOpenAiApi(aiConfig.model.substring('openai-'.length), prompt, aiConfig.apiKey);
-            } else throw new Error('Modello AI non supportato.');
+            } else {
+                throw new Error('Modello AI non supportato.');
+            }
 
             const suggestedMappingJson = extractJsonFromString(llmResponseString);
-            if (!suggestedMappingJson) throw new Error(`L'AI (${aiConfig.model}) non ha restituito JSON valido. Risposta: ${llmResponseString}`);
-            if (!Array.isArray(suggestedMappingJson)) throw new Error(`Output AI (${aiConfig.model}) non è array JSON. Output: ${JSON.stringify(suggestedMappingJson)}`);
-            if (!suggestedMappingJson.every(item => typeof item === 'object' && item !== null && 'id' in item && typeof item.id === 'string' && 'valore' in item)) {
+            if (!suggestedMappingJson) {
+                throw new Error(`L'AI (${aiConfig.model}) non ha restituito JSON valido. Risposta: ${llmResponseString}`);
+            }
+            if (!Array.isArray(suggestedMappingJson)) {
+                throw new Error(`Output AI (${aiConfig.model}) non è array JSON. Output: ${JSON.stringify(suggestedMappingJson)}`);
+            }
+            if (!suggestedMappingJson.every(item =>
+                typeof item === 'object' && item !== null &&
+                'id' in item && typeof item.id === 'string' && 'valore' in item
+            )) {
                 throw new Error(`Oggetti JSON AI (${aiConfig.model}) non format {id: string, valore: any}. Output: ${JSON.stringify(suggestedMappingJson)}`);
             }
 
-            aiOutputTextarea.value = JSON.stringify(suggestedMappingJson, null, 2);
-            aiOutputContainer.classList.remove('hidden');
-            applyAiMappingButton.disabled = false;
-            resetAiMappingButton.disabled = false;
-            showStatus(`🎯 Mapping da ${aiConfig.model} (da ${inputTypeForStatus}) completato.`, 'success');
-            aiOutputContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (debugMode) {
+                aiOutputTextarea.value = JSON.stringify(suggestedMappingJson, null, 2);
+                aiOutputContainer.classList.remove('hidden');
+                applyAiMappingButton.disabled = false;
+                resetAiMappingButton.disabled = false;
+                showStatus(`🎯 Mapping da ${aiConfig.model} (da ${inputTypeForStatus}) completato.`, 'success');
+                aiOutputContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                // In modalità produzione, applica direttamente il mapping
+                setLoading(false);
+                await assignValuesToPage(suggestedMappingJson);
+            }
         } catch (error) {
             showStatus(`❌ Errore Mapping AI (${aiConfig.model} da ${inputTypeForStatus}): ${error.message}`, 'error', 10000);
-            aiOutputTextarea.value = `Errore: ${error.message}\n\nRisposta:\n${llmResponseString || 'Nessuna risposta.'}`;
-            aiOutputContainer.classList.remove('hidden'); 
+            if (debugMode) {
+                aiOutputTextarea.value = `Errore: ${error.message}\n\nRisposta:\n${llmResponseString || 'Nessuna risposta.'}`;
+                aiOutputContainer.classList.remove('hidden');
+            }
         } finally {
-            mapWithAiButton.disabled = false; saveSessionState();
+            mapWithAiButton.disabled = false;
+            if (!debugMode) {
+                setLoading(false);
+            }
+            saveSessionState();
         }
     });
 
     assignDirectJsonValuesButton.addEventListener('click', async () => {
+        // In modalità produzione, estrai automaticamente se necessario
+        if (!debugMode) {
+            const extractionSuccess = await ensureFormExtracted();
+            if (!extractionSuccess) {
+                return;
+            }
+        }
+
         const jsonDataString = jsonDataInput.value.trim();
         if (!jsonDataString) {
-            showStatus('⚠️ Area dati JSON Input vuota per assegnazione diretta.', 'warning'); return;
+            showStatus('⚠️ Area dati JSON Input vuota per assegnazione diretta.', 'warning');
+            return;
         }
+
         let parsedJsonInput;
-        try { parsedJsonInput = JSON.parse(jsonDataString); }
-        catch (error) { showStatus(`❌ Errore parsing JSON Input: ${error.message}`, 'error', 7000); return; }
-        
+        try {
+            parsedJsonInput = JSON.parse(jsonDataString);
+        } catch (error) {
+            showStatus(`❌ Errore parsing JSON Input: ${error.message}`, 'error', 7000);
+            return;
+        }
+
         const processedData = preprocessJsonForDirectAssignment(parsedJsonInput);
         if (processedData.length === 0) {
-            showStatus('⚠️ Nessuna coppia id/valore estraibile dal JSON fornito per assegnazione diretta. Assicurati che il formato sia `[{"id": "...", "valore": "..."}]` o una struttura comune che lo contenga.', 'warning', 10000); return;
+            showStatus('⚠️ Nessuna coppia id/valore estraibile dal JSON fornito per assegnazione diretta. Assicurati che il formato sia `[{"id": "...", "valore": "..."}]` o una struttura comune che lo contenga.', 'warning', 10000);
+            return;
         }
+
+        if (!debugMode) {
+            setLoading(true, 'Compilazione automatica in corso...');
+        }
+
         await assignValuesToPage(processedData);
-    });
 
-    applyAiMappingButton.addEventListener('click', async () => {
-        const aiJsonString = aiOutputTextarea.value.trim();
-        if (!aiJsonString) {
-            showStatus('⚠️ Nessun mapping JSON da AI da assegnare.', 'warning'); return;
+        if (!debugMode) {
+            setLoading(false);
         }
-        let parsedAiData;
-        try { parsedAiData = JSON.parse(aiJsonString); }
-        catch (error) { showStatus(`❌ Errore parsing JSON da AI: ${error.message}`, 'error', 7000); return; }
-        await assignValuesToPage(parsedAiData);
     });
 
-    resetAiMappingButton.addEventListener('click', () => {
-        aiOutputTextarea.value = '';
-        aiOutputContainer.classList.add('hidden');
-        applyAiMappingButton.disabled = true;
-        resetAiMappingButton.disabled = true;
-        showStatus('🗑️ Mapping AI resettato.', 'info');
-        saveSessionState();
-    });
+    if (debugMode) {
+        applyAiMappingButton.addEventListener('click', async () => {
+            const aiJsonString = aiOutputTextarea.value.trim();
+            if (!aiJsonString) {
+                showStatus('⚠️ Nessun mapping JSON da AI da assegnare.', 'warning');
+                return;
+            }
+            let parsedAiData;
+            try {
+                parsedAiData = JSON.parse(aiJsonString);
+            } catch (error) {
+                showStatus(`❌ Errore parsing JSON da AI: ${error.message}`, 'error', 7000);
+                return;
+            }
+            await assignValuesToPage(parsedAiData);
+        });
 
-    copyButton.addEventListener('click', () => {
-        const isSourceView = !htmlSourceTextarea.classList.contains('hidden');
-        const contentToCopy = isSourceView ? htmlSourceTextarea.value : formatHtmlForTextarea(currentHtmlContent || '');
-        if (contentToCopy && !copyButton.disabled) {
-            navigator.clipboard.writeText(contentToCopy)
-                .then(() => showStatus('📋 HTML copiato!', 'success'))
-                .catch(err => {
-                    showStatus('❌ Errore copia HTML.', 'error');
-                    try { 
-                        const ta = document.createElement('textarea'); ta.value = contentToCopy; ta.style.position = 'fixed'; document.body.appendChild(ta);
-                        ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-                        showStatus('📋 HTML copiato (fallback)!', 'success');
-                    } catch (e) { showStatus('❌ Copia fallita.', 'error'); }
+        resetAiMappingButton.addEventListener('click', () => {
+            aiOutputTextarea.value = '';
+            aiOutputContainer.classList.add('hidden');
+            applyAiMappingButton.disabled = true;
+            resetAiMappingButton.disabled = true;
+            showStatus('🗑️ Mapping AI resettato.', 'info');
+            saveSessionState();
+        });
+
+        copyButton.addEventListener('click', () => {
+            const isSourceView = !htmlSourceTextarea.classList.contains('hidden');
+            const contentToCopy = isSourceView ? htmlSourceTextarea.value : formatHtmlForTextarea(currentHtmlContent || '');
+            if (contentToCopy && !copyButton.disabled) {
+                navigator.clipboard.writeText(contentToCopy)
+                    .then(() => showStatus('📋 HTML copiato!', 'success'))
+                    .catch(err => {
+                        showStatus('❌ Errore copia HTML.', 'error');
+                        try {
+                            const ta = document.createElement('textarea');
+                            ta.value = contentToCopy;
+                            ta.style.position = 'fixed';
+                            document.body.appendChild(ta);
+                            ta.focus();
+                            ta.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(ta);
+                            showStatus('📋 HTML copiato (fallback)!', 'success');
+                        } catch (e) {
+                            showStatus('❌ Copia fallita.', 'error');
+                        }
+                    });
+            } else {
+                showStatus('ℹ️ Nessun HTML da copiare.', 'info');
+            }
+        });
+
+        saveButton.addEventListener('click', () => {
+            const isSourceView = !htmlSourceTextarea.classList.contains('hidden');
+            const contentToSave = isSourceView ? htmlSourceTextarea.value : formatHtmlForTextarea(currentHtmlContent || '');
+            if (contentToSave && !saveButton.disabled) {
+                const pageName = pageNameInput.value.trim() || 'extracted_forms';
+                const filename = sanitizeFilenameForSave(pageName) + '.html';
+                const fileContent = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>${pageName.replace(/</g, "&lt;").replace(/>/g, "&gt;")} - Forms</title><style>body{font-family:sans-serif;line-height:1.6;padding:20px;background:#f4f4f4}h3{color:#3498db; margin-top: 2em; margin-bottom: 0.5em;}form{background:#fff;border:1px solid #ddd;border-radius:8px;padding:20px;margin-bottom:20px}label{display:block;margin-bottom:5px;font-weight:bold;}input,textarea,select{width:95%;max-width:400px;padding:8px;margin-bottom:10px;border:1px solid #ccc;border-radius:4px;box-sizing: border-box;}input[type="checkbox"], input[type="radio"] {width: auto; margin-right: 5px; vertical-align: middle;} fieldset{margin-top:1em; margin-bottom:1em; padding:1em; border:1px solid #ccc;} legend{font-weight:bold; color:#3498db; padding: 0 0.5em;} hr{margin:20px 0;border:1px dashed #ccc}</style></head><body><h2>${pageName.replace(/</g, "&lt;").replace(/>/g, "&gt;")} - Forms Estratti</h2>${contentToSave}</body></html>`;
+                const blob = new Blob([fileContent], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                chrome.downloads.download({
+                    url: url,
+                    filename: filename,
+                    saveAs: true
+                }, (downloadId) => {
+                    URL.revokeObjectURL(url);
+                    if (chrome.runtime.lastError) {
+                        showStatus(`❌ Errore salvataggio: ${chrome.runtime.lastError.message}`, 'error');
+                    } else if (downloadId) {
+                        showStatus(`💾 Download "${filename}" avviato.`, 'success');
+                    } else {
+                        showStatus(`⚠️ Download "${filename}" non avviato o annullato.`, 'warning', 7000);
+                    }
                 });
-        } else showStatus('ℹ️ Nessun HTML da copiare.', 'info');
-    });
-
-    saveButton.addEventListener('click', () => {
-        const isSourceView = !htmlSourceTextarea.classList.contains('hidden');
-        const contentToSave = isSourceView ? htmlSourceTextarea.value : formatHtmlForTextarea(currentHtmlContent || '');
-        if (contentToSave && !saveButton.disabled) {
-            const pageName = pageNameInput.value.trim() || 'extracted_forms';
-            const filename = sanitizeFilenameForSave(pageName) + '.html';
-            const fileContent = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>${pageName.replace(/</g, "<").replace(/>/g, ">")} - Forms</title><style>body{font-family:sans-serif;line-height:1.6;padding:20px;background:#f4f4f4}h3{color:#3498db; margin-top: 2em; margin-bottom: 0.5em;}form{background:#fff;border:1px solid #ddd;border-radius:8px;padding:20px;margin-bottom:20px}label{display:block;margin-bottom:5px;font-weight:bold;}input,textarea,select{width:95%;max-width:400px;padding:8px;margin-bottom:10px;border:1px solid #ccc;border-radius:4px;box-sizing: border-box;}input[type="checkbox"], input[type="radio"] {width: auto; margin-right: 5px; vertical-align: middle;} fieldset{margin-top:1em; margin-bottom:1em; padding:1em; border:1px solid #ccc;} legend{font-weight:bold; color:#3498db; padding: 0 0.5em;} hr{margin:20px 0;border:1px dashed #ccc}</style></head><body><h2>${pageName.replace(/</g, "<").replace(/>/g, ">")} - Forms Estratti</h2>${contentToSave}</body></html>`;
-            const blob = new Blob([fileContent], { type: 'text/html;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            chrome.downloads.download({ url: url, filename: filename, saveAs: true }, (downloadId) => {
-                URL.revokeObjectURL(url); 
-                if (chrome.runtime.lastError) {
-                    showStatus(`❌ Errore salvataggio: ${chrome.runtime.lastError.message}`, 'error');
-                } else if (downloadId) {
-                    showStatus(`💾 Download "${filename}" avviato.`, 'success');
-                } else {
-                    showStatus(`⚠️ Download "${filename}" non avviato o annullato.`, 'warning', 7000);
-                }
-            });
-        } else showStatus('ℹ️ Nessun HTML da salvare.', 'info');
-    });
+            } else {
+                showStatus('ℹ️ Nessun HTML da salvare.', 'info');
+            }
+        });
+    }
 
     // --- Inizializzazione ---
-    setupCollapsibles();
-    loadAiConfig().then(() => { 
-        loadSessionState();
-    });
+    async function initialize() {
+        await initializeUIMode();
+        setupCollapsibles();
+        await loadAiConfig();
+        await loadSessionState();
+    }
+
+    initialize();
 
 }); // End DOMContentLoaded

@@ -1,0 +1,19 @@
+*modulo di registrazione*
+Nome: [nomeUtente]: Marco
+Cognome: [cognomeUtente]: Rossi
+Email: [emailUtente]: marco@rossi.it
+Password: [passwordUtente]: min8caratteri
+Età: [etaUtente]: 19
+Data di Nascita: [dataNascita]: 2006-05-16
+Maschio [sessoM]: maschio
+Orario Preferito per Contatto: [orarioContatto]: 22:10
+Data e Ora Appuntamento Preferito: [appuntamentoDataOra]: 2025-06-04T22:10
+Sito Web Personale: [sitoWeb]: www.personale.com
+Numero di Telefono: [telefono]: 050.929954
+Colore Preferito: [colorePreferito]: #c20d00
+Livello di Soddisfazione (0-100): 57 [livelloSoddisfazione]: 57
+Sport [interesseSport]: Selezionato
+Lettura [interesseLettura]: Selezionato
+Viaggi [interesseViaggi]: Selezionato
+Tecnologia [interesseTecnologia]: Selezionato
+Paese di Residenza: [paeseResidenza]: Regno Unito

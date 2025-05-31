@@ -460,6 +460,24 @@
       display: none !important;
     }
 
+    /* --- Classe per nascondere elementi in modalità produzione --- */
+    .debug-only {
+      display: block;
+    }
+
+    .production-only {
+      display: none;
+    }
+
+    /* In modalità produzione */
+    body.production-mode .debug-only {
+      display: none !important;
+    }
+
+    body.production-mode .production-only {
+      display: block;
+    }
+
     .view-toggle-label {
       margin-right: 12px;
       font-weight: normal;
@@ -533,6 +551,49 @@
       border-left-color: #10b981;
       background: #ecfdf5;
       color: #065f46;
+    }
+
+    /* --- Loading indicator --- */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .loading-content {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .loading-spinner {
+      border: 4px solid #f3f4f6;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 16px;
+      color: #1f2937;
+      font-weight: 500;
     }
 
     /* --- Responsive improvements --- */
@@ -610,8 +671,8 @@
       </div>
     </div>
 
-    <!-- 2. Extraction Section -->
-    <div class="collapsible-section extraction-section" id="extractionSection">
+    <!-- 2. Extraction Section - VISIBILE SOLO IN DEBUG MODE -->
+    <div class="collapsible-section extraction-section debug-only" id="extractionSection">
       <button class="collapsible-toggle">
         <span><span class="section-icon">🔍</span>Analisi ed Estrazione Form</span>
       </button>
@@ -748,8 +809,8 @@
         </div>
 
 
-        <!-- Common AI Output Container (initially hidden) -->
-        <div id="aiOutputContainer" class="content-area hidden">
+        <!-- Common AI Output Container (initially hidden) - VISIBILE SOLO IN DEBUG MODE -->
+        <div id="aiOutputContainer" class="content-area hidden debug-only">
           <h3 id="aiOutputTitle">🎯 Mapping Dati Suggerito dall'AI</h3>
           <div id="aiOutputInfo" class="info-text ai-info">
             L'AI ha analizzato i tuoi dati e i campi del form per creare il mapping ottimale.
@@ -779,6 +840,14 @@
 
   <!-- Status message migliorato -->
   <div id="statusMessage">🚀 Benvenuto in Form Helper AI! Seleziona una sezione per iniziare.</div>
+
+  <!-- Loading overlay - solo per modalità produzione -->
+  <div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Elaborazione in corso...</div>
+    </div>
+  </div>
 
   <script src="popup.js"></script>
 </body>

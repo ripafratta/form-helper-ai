@@ -1,0 +1,97 @@
+[
+  {
+    "sezione": "modulo di registrazione",
+    "campi": [
+      {
+        "id": "",
+        "descrizione": "Nome:",
+        "valore": "Marco"
+      },
+      {
+        "id": "",
+        "descrizione": "Cognome:",
+        "valore": "Rossi"
+      },
+      {
+        "id": "",
+        "descrizione": "Email:",
+        "valore": "marco@rossi.it"
+      },
+      {
+        "id": "",
+        "descrizione": "Password:",
+        "valore": "min8caratteri"
+      },
+      {
+        "id": "",
+        "descrizione": "Età:",
+        "valore": "19"
+      },
+      {
+        "id": "",
+        "descrizione": "Data di Nascita:",
+        "valore": "2006-05-16"
+      },
+      {
+        "id": "",
+        "descrizione": "Maschio",
+        "valore": "maschio"
+      },
+      {
+        "id": "",
+        "descrizione": "Orario Preferito per Contatto:",
+        "valore": "22:10"
+      },
+      {
+        "id": "",
+        "descrizione": "Data e Ora Appuntamento Preferito:",
+        "valore": "2025-06-04T22:10"
+      },
+      {
+        "id": "",
+        "descrizione": "Sito Web Personale:",
+        "valore": "www.personale.com"
+      },
+      {
+        "id": "",
+        "descrizione": "Numero di Telefono:",
+        "valore": "050.929954"
+      },
+      {
+        "id": "",
+        "descrizione": "Colore Preferito:",
+        "valore": "#c20d00"
+      },
+      {
+        "id": "",
+        "descrizione": "Livello di Soddisfazione (0-100): 57",
+        "valore": "57"
+      },
+      {
+        "id": "",
+        "descrizione": "Sport",
+        "valore": "Selezionato"
+      },
+      {
+        "id": "",
+        "descrizione": "Lettura",
+        "valore": "Selezionato"
+      },
+      {
+        "id": "",
+        "descrizione": "Viaggi",
+        "valore": "Selezionato"
+      },
+      {
+        "id": "",
+        "descrizione": "Tecnologia",
+        "valore": "Selezionato"
+      },
+      {
+        "id": "",
+        "descrizione": "Paese di Residenza:",
+        "valore": "Regno Unito"
+      }
+    ]
+  }
+]
