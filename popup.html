@@ -476,6 +476,45 @@
     }
 
     /* File buttons container */
+    /* Tab Navigation */
+    .tabs-container {
+      display: flex;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 20px;
+      padding: 0 5px;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      font-weight: 500;
+      color: #666;
+      border-bottom: 2px solid transparent;
+      margin-right: 5px;
+      transition: all 0.2s ease;
+      border-radius: 4px 4px 0 0;
+    }
+
+    .tab:hover {
+      background-color: #f5f5f5;
+      color: #333;
+    }
+
+    .tab.active {
+      color: #da7756;
+      border-bottom-color: #da7756;
+      font-weight: 600;
+      background-color: #fff;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
     .file-buttons-container {
       display: flex;
       gap: 12px;
@@ -532,13 +571,14 @@
 
   <!-- Contenitore principale per lo scrolling -->
   <div id="mainContentContainer">
+    <!-- Tab Navigation -->
+    <div class="tabs-container">
+      <div class="tab active" data-tab="extractionSection">Estrai Form</div>
+      <div class="tab" data-tab="fillingSection">Compila il Form</div>
+    </div>
 
     <!-- Extraction Section - VISIBILE SOLO IN DEBUG MODE -->
-    <div class="section debug-only" id="extractionSection">
-      <div class="section-header-clickable" id="extractionHeader">
-        <h2 class="section-title">Estrai Form HTML</h2>
-        <span class="toggle-icon">▼</span>
-      </div>
+    <div class="section debug-only tab-content active" id="extractionSection">
       <div class="section-content" id="extractionContent">
         <div class="info-text">
           Estrai la form HTML della pagina corrente utilizzando algoritmi deterministici o analisi AI avanzata.
@@ -594,11 +634,7 @@
     </div>
 
     <!-- Filling and AI Mapping Section -->
-    <div class="section" id="fillingAndMappingSection">
-      <div class="section-header-clickable" id="fillingHeader">
-        <h2 class="section-title">Compila il Form</h2>
-        <span class="toggle-icon">▼</span>
-      </div>
+    <div class="section tab-content" id="fillingSection">
       <div class="section-content" id="fillingContent">
         <div class="info-text">
           Compila il form con dati strutturati (JSON) o testo libero utilizzando l'AI per il mapping semantico.

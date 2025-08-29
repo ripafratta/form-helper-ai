@@ -1,4 +1,37 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // --- Tab Switching Functionality ---
+    function setupTabs() {
+        const tabs = document.querySelectorAll('.tab');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and content
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+                
+                // Save active tab to localStorage
+                localStorage.setItem('activeTab', tabId);
+            });
+        });
+        
+        // Restore active tab from localStorage if available
+        const savedTab = localStorage.getItem('activeTab');
+        if (savedTab && document.getElementById(savedTab)) {
+            document.querySelector(`.tab[data-tab="${savedTab}"]`).click();
+        } else if (tabs.length > 0) {
+            // Default to first tab if no saved tab
+            tabs[0].click();
+        }
+    }
+    
+    // Initialize tabs
+    setupTabs();
+    
     // --- Elementi UI ---
     const extractFormsButton = document.getElementById('extractFormsButton');
     const extractFormsWithAiButton = document.getElementById('extractFormsWithAiButton');
@@ -39,13 +72,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const applyAiMappingButton = document.getElementById('applyAiMappingButton'); // Unified
     const resetAiMappingButton = document.getElementById('resetAiMappingButton'); // Unified
 
-    // Collapsible Sections
+    // Tab sections
     const extractionSection = document.getElementById('extractionSection');
-    const extractionHeader = document.getElementById('extractionHeader'); // New
-    const extractionContent = document.getElementById('extractionContent'); // New
-
-    const fillingHeader = document.getElementById('fillingHeader'); // New
-    const fillingContent = document.getElementById('fillingContent'); // New
 
     // Loading overlay
     const loadingOverlay = document.getElementById('loadingOverlay');
@@ -881,9 +909,7 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
             aiOutputData: aiOutputTextarea.value,
             isAiOutputVisible: !aiOutputContainer.classList.contains('hidden'),
 
-            aiConfigOpen: aiConfigContent?.classList.contains('open'),
-            extractionContentCollapsed: extractionContent?.classList.contains('collapsed'), // Collapsible state
-            fillingContentCollapsed: fillingContent?.classList.contains('collapsed') // Collapsible state
+            aiConfigOpen: aiConfigContent?.classList.contains('open')
         };
         try {
             await chrome.storage.session.set({ [SESSION_STATE_KEY]: currentState });
@@ -933,31 +959,7 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
                     resetAiMappingButton.disabled = !isAiVisible;
                 }
 
-                // Collapsible sections state
                 aiConfigContent?.classList.toggle('open', !!savedState.aiConfigOpen);
-
-                // Default to collapsed for sections, then apply saved state
-                // In production mode, filling section should be open if no saved state
-                const defaultExtractionCollapsed = true; // Default to collapsed for extraction
-                const defaultFillingCollapsed = false; // Default to open for filling
-
-                if (!debugMode) {
-                    // In production mode, always start with extraction collapsed and filling open
-                    extractionContent.classList.add('collapsed');
-                    extractionHeader.classList.add('collapsed');
-                    fillingContent.classList.remove('collapsed');
-                    fillingHeader.classList.remove('collapsed');
-                } else {
-                    extractionContent.classList.toggle('collapsed', savedState.extractionContentCollapsed ?? defaultExtractionCollapsed);
-                    extractionHeader.classList.toggle('collapsed', savedState.extractionContentCollapsed ?? defaultExtractionCollapsed);
-                    fillingContent.classList.toggle('collapsed', savedState.fillingContentCollapsed ?? defaultFillingCollapsed);
-                    fillingHeader.classList.toggle('collapsed', savedState.fillingContentCollapsed ?? defaultFillingCollapsed);
-                }
-                
-                // Ensure the "Applica Modifiche al Codice" button visibility is correct based on viewMode
-                applySourceChangesButton.classList.toggle('hidden', document.querySelector('input[name="viewMode"]:checked')?.value === 'preview');
-
-                showStatus('🔄 Stato sessione precedente ripristinato.', 'info', 3000);
             } else {
                 if (debugMode) {
                     copyButton.disabled = true;
@@ -965,66 +967,16 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
                     applyAiMappingButton.disabled = true;
                     resetAiMappingButton.disabled = true;
                     aiOutputContainer.classList.add('hidden');
-                    // Default for debug mode: extraction open, filling collapsed
-                    extractionContent.classList.remove('collapsed');
-                    extractionHeader.classList.remove('collapsed');
-                    fillingContent.classList.add('collapsed');
-                    fillingHeader.classList.add('collapsed');
-                } else {
-                    // Default for production mode: extraction collapsed, filling open
-                    extractionContent.classList.add('collapsed');
-                    extractionHeader.classList.add('collapsed');
-                    fillingContent.classList.remove('collapsed');
-                    fillingHeader.classList.remove('collapsed');
                 }
                 aiConfigContent?.classList.remove('open');
             }
         } catch (error) {
             console.error("Error loading session state:", error);
             showStatus('❌ Errore nel caricamento dello stato della sessione.', 'error');
-            // Fallback to default initial state on error
-            extractionContent.classList.add('collapsed');
-            extractionHeader.classList.add('collapsed');
-            fillingContent.classList.remove('collapsed');
-            fillingHeader.classList.remove('collapsed');
-            aiConfigContent?.classList.remove('open');
         }
     }
 
 
-    function setupCollapsibles() {
-        // Gestione del link di configurazione AI
-        configToggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            aiConfigContent.classList.toggle('open');
-            saveSessionState();
-        });
-
-        // Section collapsibles
-        const toggleSection = (clickedHeader, clickedContent) => {
-            // If the clicked section is already open, do nothing
-            const isOpening = clickedHeader.classList.contains('collapsed');
-            
-            // Close all sections first
-            [extractionHeader, fillingHeader].forEach(header => {
-                header.classList.add('collapsed');
-            });
-            [extractionContent, fillingContent].forEach(content => {
-                content.classList.add('collapsed');
-            });
-            
-            // If we're opening a section (not closing it), open the clicked one
-            if (isOpening) {
-                clickedHeader.classList.remove('collapsed');
-                clickedContent.classList.remove('collapsed');
-            }
-            
-            saveSessionState();
-        };
-
-        extractionHeader.addEventListener('click', () => toggleSection(extractionHeader, extractionContent));
-        fillingHeader.addEventListener('click', () => toggleSection(fillingHeader, fillingContent));
-    }
 
     async function loadAiConfig() {
         try {
@@ -1420,7 +1372,6 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
     // --- Inizializzazione ---
     async function initialize() {
         await initializeUIMode();
-        setupCollapsibles();
         await loadAiConfig();
         await loadSessionState();
     }

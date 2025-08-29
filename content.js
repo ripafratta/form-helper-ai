@@ -1074,19 +1074,19 @@ window.assignFormValuesInPage = function (dataToAssign) {
                 if (tagName === 'input') {
                     switch (type) {
                         case 'radio':
-                            if (element.value === valore || (valore === 'OK' && type === 'radio')) {
+                            if (element.value === valore || valore === 'OK') {
                                 element.checked = true;
                                 assignmentsCount++;
-                            } else {
-                                console.log(`Content script: Radio "${id}" (value="${element.value}") non selezionato con valore JSON "${valore}".`);
                             }
                             break;
                         case 'checkbox':
-                            if (valore === 'OK' || valore === true || String(valore).toLowerCase() === 'true') {
-                                element.checked = true;
-                            } else if (valore === 'KO' || valore === false || String(valore).toLowerCase() === 'false') {
-                                element.checked = false;
-                            }
+                            // For checkboxes, check if the value matches the checkbox's value or if it's a boolean/OK/KO
+                            const shouldCheck = (element.value === valore) || 
+                                             (valore === 'OK' || valore === true || String(valore).toLowerCase() === 'true');
+                            element.checked = shouldCheck;
+                            // Also trigger the change event to ensure any attached handlers are notified
+                            const event = new Event('change', { bubbles: true });
+                            element.dispatchEvent(event);
                             assignmentsCount++;
                             break;
                         case 'file':
