@@ -1001,9 +1001,24 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
         });
 
         // Section collapsibles
-        const toggleSection = (header, content) => {
-            header.classList.toggle('collapsed');
-            content.classList.toggle('collapsed');
+        const toggleSection = (clickedHeader, clickedContent) => {
+            // If the clicked section is already open, do nothing
+            const isOpening = clickedHeader.classList.contains('collapsed');
+            
+            // Close all sections first
+            [extractionHeader, fillingHeader].forEach(header => {
+                header.classList.add('collapsed');
+            });
+            [extractionContent, fillingContent].forEach(content => {
+                content.classList.add('collapsed');
+            });
+            
+            // If we're opening a section (not closing it), open the clicked one
+            if (isOpening) {
+                clickedHeader.classList.remove('collapsed');
+                clickedContent.classList.remove('collapsed');
+            }
+            
             saveSessionState();
         };
 

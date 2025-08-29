@@ -275,6 +275,9 @@
       font-size: 18px;
       font-weight: 600;
       color: #1a1a1a;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: inline-block;
       margin-bottom: 16px;
       padding-bottom: 12px;
       border-bottom: 1px solid #f0f0f0;
@@ -314,11 +317,25 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 12px;
-      border-bottom: 1px solid #f0f0f0;
+      padding: 8px 16px;
+      background-color: #f7f7f7;
+      border-radius: 8px;
       cursor: pointer;
-      margin-bottom: 16px;
-      transition: background-color 0.2s ease;
+      transition: all 0.2s ease;
+      margin-bottom: 0;
+    }
+
+    #extractionHeader {
+      background-color: #fff3e0 !important; /* Light orange */
+    }
+
+    #fillingHeader {
+      background-color: #f1f8e9 !important; /* Light green */
+    }
+    
+    /* Reset the title background */
+    .section-title {
+      background-color: transparent !important;
     }
 
     .section-header-clickable:hover {
@@ -606,7 +623,23 @@
         <!-- Unified Data Input Container -->
         <div class="content-area">
           <h3>Dati Input</h3>
-          <textarea id="dataInputUnified" placeholder='Incolla qui i dati JSON (per assegnazione diretta o mapping AI) o testo libero (per mapping AI).\n\nFormato JSON per assegnazione diretta:\n[\n  { "id": "campo1", "valore": "Valore1" },\n  { "id": "campo2", "valore": "Valore2" }\n]\n\nFormato JSON flessibile per mapping AI:\n[\n  { "descrizione": "Nome utente", "valore_dato": "Mario" },\n  { "descrizione": "Email", "valore_dato": "mario@email.com" }\n]\n\nTesto libero per mapping AI:\n"Mario Rossi, nato il 01/01/1990, email: mario.rossi@example.com"\n(L\'AI cercherà di estrarre e mappare i valori.)'></textarea>
+          <textarea id="dataInputUnified" placeholder='Incolla qui i dati JSON (per assegnazione diretta o mapping AI) o testo libero (per mapping AI).
+
+Formato JSON per assegnazione diretta:
+[
+  { "id": "campo1", "valore": "Valore1" },
+  { "id": "campo2", "valore": "Valore2" }
+]
+
+Formato JSON flessibile per mapping AI:
+[
+  { "descrizione": "Nome utente", "valore_dato": "Mario" },
+  { "descrizione": "Email", "valore_dato": "mario@email.com" }
+]
+
+Testo libero per mapping AI:
+"Mario Rossi, nato il 01/01/1990, email: mario.rossi@example.com"
+(L\'AI cercherà di estrarre e mappare i valori.)'></textarea>
         </div>
 
         <!-- Combined Button Group -->
