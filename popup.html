@@ -3,428 +3,299 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Form Helper AI (Session)</title>
+  <title>Form Helper AI</title>
   <style>
-    /* --- General Styles --- */
+    /* --- General Styles - Claude/Anthropic inspired --- */
     html,
     body {
       margin: 0;
       padding: 0;
       height: 1000px;
-      /* Aumentato per più spazio */
       width: 800px;
-      /* Larghezza aumentata */
       overflow: hidden;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       font-size: 14px;
-      color: #333;
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-      /* Sfondo gradiente moderno */
+      color: #1a1a1a;
+      background: #ffffff;
     }
 
     body {
-      padding: 15px;
-      /* Padding aumentato */
+      padding: 20px;
       box-sizing: border-box;
     }
 
     /* Contenitore principale per lo scrolling */
     #mainContentContainer {
-      height: calc(1000px - 70px - 30px);
-      /* Altezza body - status bar - padding */
+      height: calc(1000px - 60px - 40px);
       overflow-y: auto;
       overflow-x: hidden;
       padding-bottom: 15px;
       box-sizing: border-box;
     }
 
-    /* --- Header Principal --- */
+    /* --- Header minimalista --- */
     .main-header {
       text-align: center;
       margin-bottom: 20px;
-      padding: 15px;
-      /* MODIFICA QUI: da viola a blu intenso */
-      background: linear-gradient(135deg, #4A90E2 0%, #0052D4 100%);
-      /* Esempio: da un blu cielo a un blu scuro */
-      /* Alternativa: background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%); /* Tailwind-like blue gradient */
-      color: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0, 82, 212, 0.3);
-      /* Ombra adattata al blu */
-    }
-
-    .main-header h1 {
-      margin: 0;
-      font-size: 24px;
-      font-weight: 700;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      padding: 0;
     }
 
     .main-header p {
-      margin: 8px 0 0 0;
+      margin: 0;
+      font-size: 15px;
+      color: #666;
+      font-weight: 400;
+    }
+
+    /* Link configurazione AI */
+    .config-link {
+      display: inline-block;
+      margin-top: 8px;
+      color: #da7756;
+      text-decoration: none;
       font-size: 14px;
-      opacity: 0.9;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .config-link:hover {
+      color: #c25d3b;
+      text-decoration: underline;
     }
 
     h3 {
       margin-top: 0;
-      color: #2c3e50;
+      color: #1a1a1a;
       font-weight: 600;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 8px;
+      font-size: 16px;
       margin-bottom: 12px;
     }
 
     label {
       display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: #444;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #333;
+      font-size: 14px;
     }
 
     input[type="text"],
     input[type="password"],
     select {
-      width: calc(100% - 18px);
-      padding: 10px;
+      width: 100%;
+      padding: 8px 12px;
       margin-bottom: 12px;
-      border: 2px solid #e1e8ed;
-      border-radius: 8px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
       font-family: inherit;
+      font-size: 14px;
       box-sizing: border-box;
-      transition: border-color 0.3s ease;
+      transition: border-color 0.2s ease;
+      background: #fafafa;
     }
 
     input[type="text"]:focus,
     input[type="password"]:focus,
     select:focus {
       outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: #da7756;
+      background: #fff;
     }
 
     textarea {
       width: 100%;
       box-sizing: border-box;
-      border: 2px solid #e1e8ed;
-      border-radius: 8px;
-      padding: 12px;
-      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
       font-size: 13px;
       white-space: pre;
       overflow-wrap: break-word;
       resize: vertical;
       margin-bottom: 12px;
-      transition: border-color 0.3s ease;
+      transition: border-color 0.2s ease;
+      background: #fafafa;
     }
 
     textarea:focus {
       outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: #da7756;
+      background: #fff;
     }
 
     #previewFrame {
       width: 100%;
       height: 280px;
-      /* Altezza aumentata */
-      border: 2px solid #e1e8ed;
-      border-radius: 8px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
       background-color: white;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     #htmlSourceTextarea {
       min-height: 280px;
       max-height: 500px;
-      /* Più spazio per il codice */
     }
 
-    #dataInput {
-      min-height: 200px;
-      max-height: 400px;
+    #dataInputUnified {
+      min-height: 250px;
+      max-height: 450px;
     }
 
     #aiOutputTextarea {
       min-height: 200px;
       max-height: 400px;
-      background-color: #f8fafc;
-      border-color: #10b981;
-      /* Verde per output AI */
+      background-color: #f9fafb;
+      border-color: #da7756;
     }
 
-    /* --- Enhanced Button System --- */
+    /* --- Button System - Claude style --- */
     .btn {
-      border: none;
-      padding: 12px 18px;
-      border-radius: 8px;
+      border: 1px solid #ddd;
+      padding: 8px 16px;
+      border-radius: 6px;
       cursor: pointer;
-      font-weight: 600;
-      margin-right: 10px;
-      margin-bottom: 10px;
-      transition: all 0.3s ease;
+      font-weight: 500;
+      font-size: 14px;
+      transition: all 0.2s ease;
       display: inline-flex;
       align-items: center;
-      vertical-align: middle;
-      font-size: 14px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      position: relative;
-      overflow: hidden;
+      justify-content: center;
+      background: #fff;
+      color: #333;
+      min-width: auto;
     }
 
     .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      border-color: #999;
+      background: #f5f5f5;
     }
 
     .btn:active {
-      transform: translateY(0);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      background: #eee;
     }
 
-    /* Algorithmic Buttons - Blue/Cyan Theme */
-    .btn-algorithmic {
-      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+    /* Primary buttons */
+    .btn-primary {
+      background: #da7756;
       color: white;
+      border-color: #da7756;
     }
 
-    .btn-algorithmic:hover {
-      background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%);
+    .btn-primary:hover {
+      background: #c25d3b;
+      border-color: #c25d3b;
     }
 
-    .btn-algorithmic::before {
-      content: "🔧";
-      margin-right: 8px;
-      font-size: 16px;
-    }
-
-    /* AI-Powered Buttons - Green Theme */
-    .btn-ai {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-    }
-
-    .btn-ai:hover {
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-    }
-
-    .btn-ai::before {
-      content: "🤖";
-      margin-right: 8px;
-      font-size: 16px;
-    }
-
-    /* Neutral Action Buttons - Purple Theme */
-    .btn-action {
-      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-      color: white;
-    }
-
-    .btn-action:hover {
-      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-    }
-
-    /* Secondary Buttons - Gray Theme */
+    /* Secondary buttons */
     .btn-secondary {
-      background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-      color: white;
+      background: #f5f5f5;
+      color: #333;
+      border-color: #ddd;
     }
 
     .btn-secondary:hover {
-      background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+      background: #eee;
+      border-color: #bbb;
     }
 
-    /* Warning Buttons - Orange Theme */
-    .btn-warning {
-      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-      color: white;
+    /* File upload buttons */
+    .btn-file {
+      background: #fafafa;
+      border: 1px dashed #ccc;
     }
 
-    .btn-warning:hover {
-      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-    }
-
-    /* Success Buttons - Emerald Theme */
-    .btn-success {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-    }
-
-    .btn-success:hover {
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    .btn-file:hover {
+      background: #f5f5f5;
+      border-color: #999;
     }
 
     /* Disabled State */
     .btn:disabled {
-      background: #e5e7eb !important;
-      color: #9ca3af !important;
+      background: #f5f5f5 !important;
+      color: #999 !important;
+      border-color: #e0e0e0 !important;
       cursor: not-allowed !important;
-      transform: none !important;
-      box-shadow: none !important;
-    }
-
-    .btn:disabled::before {
-      content: "⏳" !important;
     }
 
     .btn-icon {
-      margin-right: 8px;
-      width: 18px;
-      height: 18px;
+      margin-right: 6px;
+      width: 16px;
+      height: 16px;
     }
 
-    /* --- Enhanced Status Message --- */
+    /* --- Status Message --- */
     #statusMessage {
       margin-top: 15px;
-      font-style: italic;
-      color: #555;
+      font-style: normal;
+      color: #666;
       min-height: 1.2em;
-      padding: 12px 16px;
-      border-radius: 8px;
+      padding: 10px 14px;
+      border-radius: 6px;
       line-height: 1.4;
-      background-color: #f8fafc;
-      border: 2px solid #e5e7eb;
-      font-weight: 500;
+      background-color: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 13px;
     }
 
     .status-info {
-      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-      border-color: #3b82f6;
-      color: #1e40af;
+      background: #f0f7ff;
+      border-color: #b3d9ff;
+      color: #0066cc;
     }
 
     .status-success {
-      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-      border-color: #10b981;
-      color: #065f46;
+      background: #f0fdf4;
+      border-color: #86efac;
+      color: #16a34a;
     }
 
     .status-error {
-      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-      border-color: #ef4444;
-      color: #991b1b;
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #dc2626;
     }
 
     .status-warning {
-      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-      border-color: #f59e0b;
-      color: #92400e;
+      background: #fffbeb;
+      border-color: #fde68a;
+      color: #d97706;
     }
 
-    /* --- Enhanced Collapsible Sections --- */
-    .collapsible-section {
+    /* --- Sections --- */
+    .section {
       background: white;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
       margin-bottom: 20px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
-
-    .collapsible-section:hover {
-      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .collapsible-toggle {
-      cursor: pointer;
-      width: 100%;
-      text-align: left;
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      border: none;
-      border-radius: 0;
-      padding: 16px 20px;
-      font-weight: bold;
-      font-size: 16px;
-      margin: 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: all 0.3s ease;
-      color: #1f2937;
-    }
-
-    .collapsible-toggle:hover {
-      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-    }
-
-    /* Sezione AI - Verde */
-    .ai-section .collapsible-toggle {
-      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-      color: #065f46;
-    }
-
-    .ai-section .collapsible-toggle:hover {
-      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-    }
-
-    /* Sezione Estrazione - Blu */
-    .extraction-section .collapsible-toggle {
-      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-      color: #1e40af;
-    }
-
-    .extraction-section .collapsible-toggle:hover {
-      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-    }
-
-    /* Sezione Compilazione - Viola */
-    .filling-section .collapsible-toggle {
-      background: linear-gradient(135deg, #FFF3E0 0%, #FFCC80 100%);
-      /* Esempio: da arancione chiaro a arancione medio-chiaro */
-      /* Alternativa: background: linear-gradient(135deg, #FEF3C7 0%, #FDBA74 100%); /* Tailwind-like orange gradient */
-      color: #E65100;
-      /* Testo arancione scuro per contrasto */
-    }
-
-    .filling-section .collapsible-toggle:hover {
-      background: linear-gradient(135deg, #FFCC80 0%, #FFA726 100%);
-      /* Esempio: da arancione medio-chiaro a arancione più intenso */
-      /* Alternativa: background: linear-gradient(135deg, #FDBA74 0%, #FB923C 100%); */
-    }
-
-    .collapsible-toggle::after {
-      content: '▼';
-      font-size: 14px;
-      transition: transform 0.3s ease;
-      margin-left: 10px;
-      color: #6b7280;
-    }
-
-    .collapsible-section.open>.collapsible-toggle::after {
-      transform: rotate(180deg);
-    }
-
-    .collapsible-content {
       padding: 20px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    /* AI Config section - collapsible */
+    #aiConfigContent {
       display: none;
-      background-color: #fff;
+      margin-top: 20px;
+      padding: 20px;
+      background: #fafafa;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
     }
 
-    .collapsible-section.open>.collapsible-content {
+    #aiConfigContent.open {
       display: block;
-      animation: slideDown 0.3s ease;
     }
 
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* --- Enhanced Component Styles --- */
     .config-item {
       margin-bottom: 16px;
-      padding: 12px;
-      background: #f8fafc;
-      border-radius: 8px;
-      border: 1px solid #e5e7eb;
     }
 
     .section-header {
@@ -432,20 +303,55 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
-      padding-bottom: 12px;
-      border-bottom: 2px solid #e5e7eb;
     }
 
     .section-header h3 {
       margin: 0;
-      border: none;
-      padding: 0;
+    }
+
+    /* Collapsible section headers */
+    .section-header-clickable {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      margin-bottom: 16px;
+      transition: background-color 0.2s ease;
+    }
+
+    .section-header-clickable:hover {
+      background-color: #f9fafb;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .section-header-clickable h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .section-header-clickable .toggle-icon {
+      font-size: 20px;
+      transition: transform 0.2s ease;
+      color: #666;
+    }
+
+    .section-header-clickable.collapsed .toggle-icon {
+      transform: rotate(-90deg);
+    }
+
+    .section-content.collapsed {
+      display: none;
     }
 
     .file-input-wrapper {
       position: relative;
       overflow: hidden;
       display: inline-block;
+      margin-right: 12px;
     }
 
     .file-input-wrapper input[type=file] {
@@ -462,19 +368,22 @@
       display: none !important;
     }
 
+    /* --- Classe per nascondere elementi in modalità produzione --- */
+    .debug-only {
+      display: block;
+    }
+
+    body.production-mode .debug-only {
+      display: none !important;
+    }
+
     .view-toggle-label {
       margin-right: 12px;
       font-weight: normal;
       display: inline-flex;
       align-items: center;
-      padding: 6px 12px;
-      background: #f1f5f9;
-      border-radius: 6px;
-      transition: all 0.3s ease;
-    }
-
-    .view-toggle-label:hover {
-      background: #e2e8f0;
+      font-size: 13px;
+      color: #666;
     }
 
     .view-toggle-label input[type="radio"] {
@@ -482,52 +391,78 @@
     }
 
     .view-toggle-controls {
-      margin-bottom: 16px;
       display: flex;
       gap: 8px;
     }
 
-    /* --- Enhanced Button Groups --- */
+    /* --- Button Groups --- */
     .button-group {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 10px;
       margin-bottom: 16px;
+      align-items: stretch;
     }
 
     .button-group .btn {
       margin: 0;
-      flex: 1;
-      min-width: 180px;
-      justify-content: center;
-    }
-
-    /* --- Section Icons --- */
-    .section-icon {
-      margin-right: 10px;
-      font-size: 20px;
     }
 
     /* --- Improved spacing and typography --- */
     .content-area {
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     .info-text {
       font-size: 13px;
-      color: #6b7280;
-      line-height: 1.4;
+      color: #666;
+      line-height: 1.5;
       margin-bottom: 12px;
-      padding: 8px 12px;
-      background: #f9fafb;
-      border-radius: 6px;
-      border-left: 4px solid #e5e7eb;
     }
 
-    .ai-info {
-      border-left-color: #10b981;
-      background: #ecfdf5;
-      color: #065f46;
+    /* --- Loading indicator --- */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .loading-content {
+      text-align: center;
+    }
+
+    .loading-spinner {
+      border: 2px solid #f3f4f6;
+      border-top: 2px solid #da7756;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 14px;
+      color: #666;
+    }
+
+    /* File buttons container */
+    .file-buttons-container {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
     }
 
     /* --- Responsive improvements --- */
@@ -535,91 +470,68 @@
       body {
         width: 750px;
       }
-
-      .button-group .btn {
-        min-width: 150px;
-      }
     }
   </style>
 </head>
 
 <body>
 
-  <!-- Header Principal -->
+  <!-- Header minimalista -->
   <div class="main-header">
-    <h1>🚀 HTML Form Helper AI</h1>
     <p>Estrazione intelligente e compilazione automatica dei form web</p>
+    <a href="#" class="config-link" id="configToggle">Configura AI</a>
+  </div>
+
+  <!-- AI Configuration (collapsible) -->
+  <div id="aiConfigContent">
+    <div class="config-item">
+      <label for="llmModelSelect">Modello LLM:</label>
+      <select id="llmModelSelect">
+        <option value="none">Nessuno / Disabilitato</option>
+        <optgroup label="Google Gemini & Gemma">
+          <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash (Veloce)</option>
+          <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro (Potente)</option>
+          <option value="gemini-2.5-pro-preview-05-06">Gemini 2.5 Pro (Preview 05-06)</option>
+          <option value="gemini-2.5-flash-preview-04-17">Gemini 2.5 Flash (Preview 04-17)</option>
+          <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+          <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite</option>
+          <option value="gemma-3-27b-it">Gemma 3 27B IT</option>
+          <option value="gemma-3-12b-it">Gemma 3 12B IT</option>
+          <option value="gemma-3-4b-it">Gemma 3 4B IT</option>
+        </optgroup>
+        <optgroup label="OpenAI ChatGPT">
+          <option value="openai-gpt-4o">GPT-4o (Nuovo/Veloce/Potente)</option>
+          <option value="openai-gpt-4-turbo">GPT-4 Turbo (Potente)</option>
+          <option value="openai-gpt-3.5-turbo">GPT-3.5 Turbo (Equilibrato)</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="config-item">
+      <label for="apiKeyInput">Chiave API:</label>
+      <input type="password" id="apiKeyInput" placeholder="Inserisci la chiave API per il modello scelto">
+    </div>
+    <button id="saveAiConfigButton" class="btn btn-primary">Salva Configurazione</button>
   </div>
 
   <!-- Contenitore principale per lo scrolling -->
   <div id="mainContentContainer">
 
-    <!-- 1. AI Configuration Section -->
-    <div class="collapsible-section ai-section" id="aiConfigSection">
-      <button class="collapsible-toggle">
-        <span><span class="section-icon">🤖</span>Configurazione AI</span>
-      </button>
-      <div class="collapsible-content">
-        <div class="info-text ai-info">
-          Configura un modello LLM per abilitare l'estrazione intelligente dei form e il mapping semantico avanzato.
-        </div>
-        <div id="aiConfigContainer">
-          <div class="config-item">
-            <label for="llmModelSelect">Modello LLM:</label>
-            <select id="llmModelSelect">
-              <option value="none">Nessuno / Disabilitato</option>
-              <optgroup label="🔹 Google Gemini & Gemma">
-                <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash (Veloce)</option>
-                <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro (Potente)</option>
-                <option value="gemini-2.5-pro-preview-05-06">Gemini 2.5 Pro (Preview 05-06)</option>
-                <option value="gemini-2.5-flash-preview-04-17">Gemini 2.5 Flash (Preview 04-17)</option>
-                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite</option>
-                <option value="gemma-3-27b-it">Gemma 3 27B IT</option>
-                <option value="gemma-3-12b-it">Gemma 3 12B IT</option>
-                <option value="gemma-3-4b-it">Gemma 3 4B IT</option>
-              </optgroup>
-              <optgroup label="🔹 OpenAI ChatGPT">
-                <option value="openai-gpt-4o">GPT-4o (Nuovo/Veloce/Potente)</option>
-                <option value="openai-gpt-4-turbo">GPT-4 Turbo (Potente)</option>
-                <option value="openai-gpt-3.5-turbo">GPT-3.5 Turbo (Equilibrato)</option>
-              </optgroup>
-            </select>
-          </div>
-          <div class="config-item">
-            <label for="apiKeyInput">Chiave API:</label>
-            <input type="password" id="apiKeyInput" placeholder="Inserisci la chiave API per il modello scelto">
-          </div>
-          <div class="button-group">
-            <button id="saveAiConfigButton" class="btn btn-success">
-              <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                <polyline points="7 3 7 8 15 8"></polyline>
-              </svg>
-              Salva Configurazione AI
-            </button>
-          </div>
-        </div>
+    <!-- Extraction Section - VISIBILE SOLO IN DEBUG MODE -->
+    <div class="section debug-only" id="extractionSection">
+      <div class="section-header-clickable" id="extractionHeader">
+        <h2 class="section-title">Estrai Form HTML</h2>
+        <span class="toggle-icon">▼</span>
       </div>
-    </div>
-
-    <!-- 2. Extraction Section -->
-    <div class="collapsible-section extraction-section" id="extractionSection">
-      <button class="collapsible-toggle">
-        <span><span class="section-icon">🔍</span>Analisi ed Estrazione Form</span>
-      </button>
-      <div class="collapsible-content">
+      <div class="section-content" id="extractionContent">
         <div class="info-text">
-          Estrai form dalla pagina corrente utilizzando algoritmi deterministici o analisi AI avanzata.
+          Estrai la form HTML della pagina corrente utilizzando algoritmi deterministici o analisi AI avanzata.
         </div>
-        <div id="controls" class="content-area">
+        <div class="content-area">
           <div class="button-group">
-            <button id="extractFormsButton" class="btn btn-algorithmic">
+            <button id="extractFormsButton" class="btn btn-secondary">
               Estrazione Algoritmica
             </button>
-            <button id="extractFormsWithAiButton" class="btn btn-ai">
+            <button id="extractFormsWithAiButton" class="btn btn-primary">
               Estrazione AI Avanzata
             </button>
           </div>
@@ -630,15 +542,15 @@
 
         <div id="outputContainer" class="content-area">
           <div class="section-header">
-            <h3>📋 Output Form Estratti</h3>
+            <h3>Output Form Estratti</h3>
             <div class="view-toggle-controls">
               <label class="view-toggle-label">
                 <input type="radio" name="viewMode" value="preview" checked>
-                🖼️ Anteprima
+                Anteprima
               </label>
               <label class="view-toggle-label">
                 <input type="radio" name="viewMode" value="source">
-                📄 Codice Sorgente
+                Codice Sorgente
               </label>
             </div>
           </div>
@@ -648,100 +560,77 @@
         </div>
 
         <div id="actions" class="content-area">
-          <h3>⚡ Azioni sull'HTML Estratto</h3>
+          <h3>Azioni sull'HTML Estratto</h3>
           <div class="button-group">
-            <button id="copyButton" disabled class="btn btn-action">
-              <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-              </svg>
+            <button id="applySourceChangesButton" class="btn btn-secondary hidden">
+              Applica Modifiche al Codice
+            </button>
+            <button id="copyButton" disabled class="btn btn-secondary">
               Copia HTML
             </button>
-            <button id="saveButton" disabled class="btn btn-success">
-              <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                <polyline points="7 3 7 8 15 8"></polyline>
-              </svg>
+            <button id="saveButton" disabled class="btn btn-primary">
               Salva come HTML
             </button>
           </div>
-          <button id="applySourceChangesButton" class="btn btn-secondary hidden">
-            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            Applica Modifiche al Codice
-          </button>
         </div>
       </div>
     </div>
 
-    <!-- 3. Filling Section -->
-    <div class="collapsible-section filling-section" id="fillingSection">
-      <button class="collapsible-toggle">
-        <span><span class="section-icon">📝</span>Compilazione con Dati Strutturati</span>
-      </button>
-      <div class="collapsible-content">
+    <!-- Filling and AI Mapping Section -->
+    <div class="section" id="fillingAndMappingSection">
+      <div class="section-header-clickable" id="fillingHeader">
+        <h2 class="section-title">Compila il Form</h2>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div class="section-content" id="fillingContent">
         <div class="info-text">
-          Compila automaticamente i form utilizzando dati JSON strutturati o mapping AI intelligente.
+          Compila il form con dati strutturati (JSON) o testo libero utilizzando l'AI per il mapping semantico.
         </div>
-        <div id="dataContainer" class="content-area">
-          <div class="section-header">
-            <h3>📊 Dati JSON</h3>
-            <div class="file-input-wrapper">
-              <button id="loadDataButton" class="btn btn-warning">
-                <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path
-                    d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48">
-                  </path>
-                </svg>
-                Carica file .json
-              </button>
-              <input type="file" id="dataFileInput" accept=".json">
-            </div>
-          </div>
-          <textarea id="dataInput" placeholder='Incolla qui i dati JSON o carica da file...
 
-Formato per assegnazione diretta:
-[
-  { "id": "campo1", "valore": "Valore1" },
-  { "id": "campo2", "valore": "Valore2" }
-]
-
-Formato flessibile per mapping AI:
-[
-  { "descrizione": "Nome utente", "valore_dato": "Mario" },
-  { "descrizione": "Email", "valore_dato": "mario@email.com" }
-]'></textarea>
-
-          <div class="button-group">
-            <button id="assignValuesButton" class="btn btn-algorithmic">
-              Assegnazione Diretta
+        <!-- File buttons -->
+        <div class="file-buttons-container">
+          <div class="file-input-wrapper">
+            <button id="loadJsonDataButton" class="btn btn-file">
+              Carica file .json
             </button>
-            <button id="mapWithAiButton" class="btn btn-ai">
+            <input type="file" id="jsonDataFileInput" accept=".json">
+          </div>
+          <div class="file-input-wrapper">
+            <button id="loadTextDataButton" class="btn btn-file">
+              Carica file .txt
+            </button>
+            <input type="file" id="textDataFileInput" accept=".txt,text/plain">
+          </div>
+        </div>
+
+        <!-- Unified Data Input Container -->
+        <div class="content-area">
+          <h3>Dati Input</h3>
+          <textarea id="dataInputUnified" placeholder='Incolla qui i dati JSON (per assegnazione diretta o mapping AI) o testo libero (per mapping AI).\n\nFormato JSON per assegnazione diretta:\n[\n  { "id": "campo1", "valore": "Valore1" },\n  { "id": "campo2", "valore": "Valore2" }\n]\n\nFormato JSON flessibile per mapping AI:\n[\n  { "descrizione": "Nome utente", "valore_dato": "Mario" },\n  { "descrizione": "Email", "valore_dato": "mario@email.com" }\n]\n\nTesto libero per mapping AI:\n"Mario Rossi, nato il 01/01/1990, email: mario.rossi@example.com"\n(L\'AI cercherà di estrarre e mappare i valori.)'></textarea>
+        </div>
+
+        <!-- Combined Button Group -->
+        <div class="button-group">
+            <button id="assignDirectJsonValuesButton" class="btn btn-secondary">
+              Assegnazione Diretta (da JSON)
+            </button>
+            <button id="mapWithAiButton" class="btn btn-primary">
               Mapping AI Semantico
             </button>
-          </div>
         </div>
 
-        <div id="aiOutputContainer" class="content-area hidden">
-          <h3>🎯 Mapping Dati Suggerito dall'AI</h3>
-          <div class="info-text ai-info">
+        <!-- AI Output Container - VISIBILE SOLO IN DEBUG MODE -->
+        <div id="aiOutputContainer" class="content-area hidden debug-only">
+          <h3 id="aiOutputTitle">Mapping Dati Suggerito dall'AI</h3>
+          <div id="aiOutputInfo" class="info-text">
             L'AI ha analizzato i tuoi dati e i campi del form per creare il mapping ottimale.
           </div>
-          <textarea id="aiOutputTextarea" 
-            placeholder="Il mapping JSON suggerito dall'AI apparirà qui..."></textarea>
+          <textarea id="aiOutputTextarea" placeholder="Il mapping JSON suggerito dall'AI apparirà qui..."></textarea>
           <div class="button-group">
-            <button id="assignAiValuesButton" class="btn btn-ai">
-              <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
+            <button id="resetAiMappingButton" class="btn btn-secondary">
+              Reset Mapping AI
+            </button>
+            <button id="applyAiMappingButton" class="btn btn-primary">
               Applica Mapping AI
             </button>
           </div>
@@ -751,8 +640,16 @@ Formato flessibile per mapping AI:
 
   </div> <!-- Fine #mainContentContainer -->
 
-  <!-- Status message migliorato -->
-  <div id="statusMessage">🚀 Benvenuto in Form Helper AI! Seleziona una sezione per iniziare.</div>
+  <!-- Status message -->
+  <div id="statusMessage">Benvenuto in Form Helper AI!</div>
+
+  <!-- Loading overlay - solo per modalità produzione -->
+  <div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Elaborazione in corso...</div>
+    </div>
+  </div>
 
   <script src="popup.js"></script>
 </body>

@@ -1,0 +1,1 @@
+BUG: l'AI non valorizza le checkbox 

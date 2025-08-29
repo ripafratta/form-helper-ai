@@ -1,21 +1,31 @@
 # HTML Form Helper
 
-Estensione per Google Chrome per facilitare l'interazione con i form HTML: estrae la struttura essenziale dei form da una pagina web, permette di visualizzarne e modificarne il codice sorgente semplificato, salvarlo, e utilizzare dati strutturati (JSON) per compilare automaticamente i campi.
+Estensione per Google Chrome con due funzionalità di base:
 
-## Funzionalità
+ * Estrarre dalla pagina web la struttura dei form HTML, permette di visualizzarne e modificarne il codice sorgente semplificato, salvarlo;
+ * Compilare in modo automatico i campi del form utilizzando dati strutturati (JSON) o semplice testo.
+
+ Entrambe le due funzionalità supportano due diversi tipi di utilizzo:
+
+ * 
+
+## Funzionalità di Estrazione
 
 *   **Estrazione Form:** Identifica e estrae i form HTML presenti nella pagina attiva con algoritmi avanzati di riconoscimento.
-*   **Estrazione Form con AI:** Utilizza modelli linguistici avanzati (LLM) per analizzare il DOM completo della pagina e estrarre form intelligentemente con associazione automatica delle etichette.
+*   **Estrazione Form con AI:** Utilizza modelli AI (LLM) per analizzare il DOM completo della pagina e estrarre form intelligentemente con associazione automatica delle etichette.
 *   **Semplificazione HTML:** Rimuove elementi e attributi non essenziali per ottenere una struttura pulita e focalizzata sui campi compilabili.
 *   **Visualizzazione Flessibile:** Permette di passare tra una **Anteprima HTML** (rendering del codice estratto) e la visualizzazione del **Codice Sorgente** modificabile.
 *   **Modifica Codice Sorgente:** Nella vista codice sorgente, è possibile modificare l'HTML estratto. Le modifiche possono essere "applicate" per aggiornare la vista.
 *   **Copia HTML:** Copia negli appunti il codice HTML estratto e semplificato.
 *   **Salva HTML:** Salva l'HTML estratto come file `.html`, includendo stili CSS di base per una buona leggibilità.
-*   **Caricamento Dati JSON:** Carica dati per la compilazione dei campi da un file `.json` o copiandoli/incollandoli direttamente.
-*   **Assegnazione Valori:** Compila automaticamente i campi del form nella pagina web attiva utilizzando i dati caricati.
+
+## Funzionalità di Compilazione
+
+*   **Caricamento Dati:** Carica i dati da usare per la compilazione del form da un file `.json`, in alternativa permette di incollarli direttamente in una textarea.
+*   **Assegnazione Valori:** Compila automaticamente il form della pagina web attiva utilizzando i dati caricati.
 *   **Messaggi di Stato:** Fornisce feedback visivo sull'esito delle operazioni.
 
-## Funzionalità AI
+## Funzionalità AI avanzate
 
 *   **Configurazione AI:** Permette di selezionare un provider LLM (Google Gemini, OpenAI ChatGPT) e inserire la relativa chiave API.
 *   **Estrazione Form Intelligente:** Analizza il DOM completo della pagina utilizzando l'AI per identificare e estrarre form con associazione automatica delle etichette basata sul contesto semantico.

@@ -1,0 +1,97 @@
+[
+  {
+    "sezione": "modulo di registrazione",
+    "campi": [
+      {
+        "id": "nomeUtente",
+        "descrizione": "Nome:",
+        "valore": "Marco"
+      },
+      {
+        "id": "cognomeUtente",
+        "descrizione": "Cognome:",
+        "valore": "Rossi"
+      },
+      {
+        "id": "emailUtente",
+        "descrizione": "Email:",
+        "valore": "marco@rossi.it"
+      },
+      {
+        "id": "passwordUtente",
+        "descrizione": "Password:",
+        "valore": "min8caratteri"
+      },
+      {
+        "id": "etaUtente",
+        "descrizione": "Età:",
+        "valore": "19"
+      },
+      {
+        "id": "dataNascita",
+        "descrizione": "Data di Nascita:",
+        "valore": "2006-05-16"
+      },
+      {
+        "id": "sessoM",
+        "descrizione": "Maschio",
+        "valore": "maschio"
+      },
+      {
+        "id": "orarioContatto",
+        "descrizione": "Orario Preferito per Contatto:",
+        "valore": "22:10"
+      },
+      {
+        "id": "appuntamentoDataOra",
+        "descrizione": "Data e Ora Appuntamento Preferito:",
+        "valore": "2025-06-04T22:10"
+      },
+      {
+        "id": "sitoWeb",
+        "descrizione": "Sito Web Personale:",
+        "valore": "www.personale.com"
+      },
+      {
+        "id": "telefono",
+        "descrizione": "Numero di Telefono:",
+        "valore": "050.929954"
+      },
+      {
+        "id": "colorePreferito",
+        "descrizione": "Colore Preferito:",
+        "valore": "#c20d00"
+      },
+      {
+        "id": "livelloSoddisfazione",
+        "descrizione": "Livello di Soddisfazione (0-100): 57",
+        "valore": "57"
+      },
+      {
+        "id": "interesseSport",
+        "descrizione": "Sport",
+        "valore": "Selezionato"
+      },
+      {
+        "id": "interesseLettura",
+        "descrizione": "Lettura",
+        "valore": "Selezionato"
+      },
+      {
+        "id": "interesseViaggi",
+        "descrizione": "Viaggi",
+        "valore": "Selezionato"
+      },
+      {
+        "id": "interesseTecnologia",
+        "descrizione": "Tecnologia",
+        "valore": "Selezionato"
+      },
+      {
+        "id": "paeseResidenza",
+        "descrizione": "Paese di Residenza:",
+        "valore": "Regno Unito"
+      }
+    ]
+  }
+]

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form di Esempio Complessa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 20px;
+            padding: 0;
+        }
+        form {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        fieldset {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        legend {
+            font-weight: bold;
+            color: #555;
+            padding: 0 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #666;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="number"],
+        input[type="date"],
+        input[type="time"],
+        input[type="datetime-local"],
+        input[type="url"],
+        input[type="tel"],
+        select,
+        textarea {
+            width: calc(100% - 22px); /* Account for padding and border */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+            font-size: 16px;
+        }
+        input[type="color"] {
+            width: 100px;
+            height: 40px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            vertical-align: middle;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .checkbox-group label,
+        .radio-group label {
+            display: inline-block;
+            margin-right: 15px;
+            font-weight: normal;
+        }
+        .checkbox-group input,
+        .radio-group input {
+            margin-right: 5px;
+        }
+        button[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            width: 100%;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        .note {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: -10px;
+            margin-bottom: 15px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Modulo di Registrazione Completo</h1>
+
+    <form action="#" method="post">
+        <!-- Sezione Dati Personali -->
+        <fieldset>
+            <legend>Dati Personali</legend>
+
+            <div class="form-group">
+                <label for="nomeUtente">Nome:</label>
+                <input type="text" id="nomeUtente" name="nomeUtente" placeholder="Il tuo nome" required>
+            </div>
+
+            <div class="form-group">
+                <label for="cognomeUtente">Cognome:</label>
+                <input type="text" id="cognomeUtente" name="cognomeUtente" placeholder="Il tuo cognome" required>
+            </div>
+
+            <div class="form-group">
+                <label for="emailUtente">Email:</label>
+                <input type="email" id="emailUtente" name="emailUtente" placeholder="indirizzo@esempio.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="passwordUtente">Password:</label>
+                <input type="password" id="passwordUtente" name="passwordUtente" placeholder="Min. 8 caratteri" required minlength="8">
+            </div>
+
+            <div class="form-group">
+                <label for="etaUtente">Età:</label>
+                <input type="number" id="etaUtente" name="etaUtente" min="18" max="120" placeholder="Solo se maggiore di 18" required>
+            </div>
+
+            <div class="form-group">
+                <label for="dataNascita">Data di Nascita:</label>
+                <input type="date" id="dataNascita" name="dataNascita" required>
+            </div>
+
+            <div class="form-group radio-group">
+                <label>Sesso:</label>
+                <input type="radio" id="sessoM" name="sesso" value="maschio" checked>
+                <label for="sessoM">Maschio</label>
+                <input type="radio" id="sessoF" name="sesso" value="femmina">
+                <label for="sessoF">Femmina</label>
+                <input type="radio" id="sessoA" name="sesso" value="altro">
+                <label for="sessoA">Altro</label>
+            </div>
+        </fieldset>
+
+        <!-- Sezione Preferenze e Contatti -->
+        <fieldset>
+            <legend>Preferenze e Contatti</legend>
+
+            <div class="form-group">
+                <label for="orarioContatto">Orario Preferito per Contatto:</label>
+                <input type="time" id="orarioContatto" name="orarioContatto">
+            </div>
+
+            <div class="form-group">
+                <label for="appuntamentoDataOra">Data e Ora Appuntamento Preferito:</label>
+                <input type="datetime-local" id="appuntamentoDataOra" name="appuntamentoDataOra">
+            </div>
+
+            <div class="form-group">
+                <label for="sitoWeb">Sito Web Personale:</label>
+                <input type="url" id="sitoWeb" name="sitoWeb" placeholder="https://www.tuosito.com">
+            </div>
+
+            <div class="form-group">
+                <label for="telefono">Numero di Telefono:</label>
+                <input type="tel" id="telefono" name="telefono" placeholder="Es. +39 123 4567890" pattern="[+]{0,1}[0-9]{1,14}" title="Formato: +39 123 4567890 o 1234567890">
+                <span class="note">Formato accettato: numeri e opzionalmente '+' iniziale.</span>
+            </div>
+
+            <div class="form-group">
+                <label for="colorePreferito">Colore Preferito:</label>
+                <input type="color" id="colorePreferito" name="colorePreferito" value="#007bff">
+            </div>
+
+            <div class="form-group">
+                <label for="livelloSoddisfazione">Livello di Soddisfazione (0-100): <span id="soddisfazioneValue">50</span></label>
+                <input type="range" id="livelloSoddisfazione" name="livelloSoddisfazione" min="0" max="100" value="50" oninput="document.getElementById('soddisfazioneValue').innerText = this.value">
+            </div>
+
+            <div class="form-group checkbox-group">
+                <label>Interessi:</label><br>
+                <input type="checkbox" id="interesseSport" name="interessi" value="sport">
+                <label for="interesseSport">Sport</label>
+                <input type="checkbox" id="interesseLettura" name="interessi" value="lettura">
+                <label for="interesseLettura">Lettura</label>
+                <input type="checkbox" id="interesseViaggi" name="interessi" value="viaggi">
+                <label for="interesseViaggi">Viaggi</label>
+                <input type="checkbox" id="interesseTecnologia" name="interessi" value="tecnologia">
+                <label for="interesseTecnologia">Tecnologia</label>
+            </div>
+
+            <div class="form-group">
+                <label for="paeseResidenza">Paese di Residenza:</label>
+                <select id="paeseResidenza" name="paeseResidenza" required>
+                    <option value="">-- Seleziona un paese --</option>
+                    <option value="it">Italia</option>
+                    <option value="fr">Francia</option>
+                    <option value="de">Germania</option>
+                    <option value="es">Spagna</option>
+                    <option value="gb">Regno Unito</option>
+                    <option value="us">Stati Uniti</option>
+                    <option value="ca">Canada</option>
+                    <option value="au">Australia</option>
+                    <option value="altro">Altro</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="commenti">Commenti/Note Aggiuntive:</label>
+                <textarea id="commenti" name="commenti" rows="5" placeholder="Inserisci qui i tuoi commenti..."></textarea>
+            </div>
+        </fieldset>
+
+        <button type="submit">Invia Modulo</button>
+    </form>
+
+</body>
+</html>
