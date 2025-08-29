@@ -144,9 +144,32 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
+        // In modalità produzione, semplifica i messaggi tecnici
+        if (!debugMode) {
+            // Sostituisci messaggi tecnici con versioni user-friendly
+            const userFriendlyMessages = {
+                '🔧 Estrazione algoritmica in corso...': '⏳ Analisi della pagina in corso...',
+                '🤖 Estrazione HTML per analisi AI...': '🤖 Analisi intelligente in corso...',
+                '⚡ Assegnazione valori in corso nella pagina...': '✏️ Compilazione automatica in corso...',
+                '🤖 Invio dati (JSON) a': '🤖 Elaborazione intelligente dei dati...',
+                '🤖 Invio dati (Testo) a': '🤖 Interpretazione del testo in corso...'
+            };
+
+            // Cerca corrispondenze parziali
+            for (const [technical, friendly] of Object.entries(userFriendlyMessages)) {
+                if (message.includes(technical.split('...')[0])) {
+                    message = friendly;
+                    break;
+                }
+            }
+        }
+
         statusMessage.textContent = message;
         statusMessage.className = ''; // Reset classes
         statusMessage.classList.add(`status-${type}`);
+        clearTimeout(statusMessage.timer);
+        if (duration > 0) {
+            statusMessage.timer = setTimeout(() => {
         clearTimeout(statusMessage.timer);
         if (duration > 0) {
             statusMessage.timer = setTimeout(() => {
@@ -472,6 +495,7 @@ Identifica e estrai:
 - \`<input type="button|submit|reset|image">\`
 - **\`<input readonly>\` e \`<textarea readonly>\`** - ESCLUDI SEMPRE
 - Elementi \`disabled\`
+- Elementi \`disabled\`
 - Elementi con ruoli: \`button\`, \`spinbutton\`, \`searchbox\`
 
 **Elementi Non Rilevanti:**
@@ -523,6 +547,7 @@ Se non trovi l'etichetta in nessuno di modi sopra indicati cerca di dedurla dal 
 - Identificatori: \`id\`, \`name\`
 - Tipi e valori: \`type\`, \`value\`, \`placeholder\`
 - Stato: \`required\`, \`checked\`, \`selected\` (NON readonly, NON disabled)
+- Stato: \`required\`, \`checked\`, \`selected\` (NON readonly, NON disabled)
 - Associazioni: \`for\`, \`aria-label\`, \`aria-labelledby\`
 - Vincoli: \`min\`, \`max\`, \`step\`, \`pattern\`, \`multiple\`
 - Accessibilità: \`title\`, \`role\`
@@ -567,6 +592,7 @@ Restituisci HTML standard semplificato seguendo questo formato:
 - **Struttura Pulita:** Indentazione corretta con 2 spazi
 - **Un elemento per riga:** Ogni tag su riga separata
 - **Label prima del campo:** Sempre \`<label>\` seguito dal relativo \`<input>\` (o viceversa se la label wrappa)
+- **Label prima del campo:** Sempre \`<label>\` seguito dal relativo \`<input>\` (o viceversa se la label wrappa)
 - **Separatori form:** \`<hr>\` tra form diverse
 - **Titoli descrittivi:** \`<h3>Nome Form (Tipo)</h3>\` per ogni form
 - **Attributi ordinati:** id, name, type, value, placeholder, altri attributi
@@ -574,6 +600,7 @@ Restituisci HTML standard semplificato seguendo questo formato:
 
 ## 9. GESTIONE CASI SPECIALI
 - **Form senza ID:** Genera ID univoco \`form-std-random\` o \`form-log-random\`
+- **Campi senza etichetta:** Crea \`<label>\` basata su placeholder, name, o title se possibile
 - **Campi senza etichetta:** Crea \`<label>\` basata su placeholder, name, o title se possibile
 - **Elementi duplicati:** Mantieni tutti, non filtrare duplicati
 - **Nesting complesso:** Semplifica struttura preservando semantica
@@ -587,11 +614,13 @@ Restituisci HTML standard semplificato seguendo questo formato:
 - **Priorità contenuto**: concentrati su form di compilazione dati significativi
 - **Ignora visibilità CSS**: estrai anche da \`display:none\`, \`visibility:hidden\`
 - **Escludi readonly e disabled**: mai includere campi readonly o disabled per modifica
+- **Escludi readonly e disabled**: mai includere campi readonly o disabled per modifica
 
 **IMPORTANTE:** Analizza l'HTML fornito e restituisci SOLO il codice HTML semplificato e formattato, senza commenti aggiuntivi, spiegazioni o wrapper markdown. Inizia direttamente con \`<h3>\` del primo form trovato.
 `;
     }
 
+    function createJsonMappingPrompt(htmlForm, inputJsonString) {
     function createJsonMappingPrompt(htmlForm, inputJsonString) {
         let cleanedJsonString = inputJsonString;
         try {
@@ -618,12 +647,77 @@ ${cleanedJsonString}
     *   \`"valore"\`: Il valore originale dal campo \`valore_dato\` (o simile) del JSON input. Per checkbox/radio con \`true\`/\`false\`, mappa a "OK" (true) e "KO" (false), o usa il valore letterale se appropriato (es. per radio che matchano il \`value\`). Per altri tipi (text, textarea, select), usa il valore JSON così com'è.
 5.  **Precisione:** Includi solo i mapping ragionevolmente sicuri. Ometti mapping ambigui.
 6.  **Output Pulito:** SOLO l'array JSON, senza commenti, spiegazioni o wrapper markdown (come \`\`\`json ... \`\`\`).
+6.  **Output Pulito:** SOLO l'array JSON, senza commenti, spiegazioni o wrapper markdown (come \`\`\`json ... \`\`\`).
 **Esempio di Output Atteso:**
 \`\`\`json
 [ { "id": "id_campo_nome", "valore": "ValoreNomeDalJSON" }, { "id": "id_checkbox_termini", "valore": "OK" }, { "id": "id_select_paese", "valore": "IT" } ]
 \`\`\`
 Genera ora l'array JSON di mapping.`;
     }
+
+    function createTextToFormMappingPrompt(htmlForm, unstructuredText) {
+        return `
+Analizza il seguente form HTML semplificato e il testo libero fornito.
+Il tuo obiettivo è estrarre informazioni rilevanti dal testo e mapparle semanticamente ai campi del form HTML.
+
+**Form HTML Semplificato:**
+\`\`\`html
+${htmlForm}
+\`\`\`
+
+**Testo Libero da Cui Estrarre i Dati:**
+\`\`\`text
+${unstructuredText}
+\`\`\`
+
+**Istruzioni Dettagliate:**
+
+1.  **Identifica i Campi del Form:**
+    *   Per ogni campo interattivo (\`<input>\`, \`<textarea>\`, \`<select>\`) nel Form HTML, identifica il suo attributo \`id\`.
+    *   Utilizza il contesto del Form HTML (etichette \`<label for="...">\`, testo circostante, attributi \`name\`, \`placeholder\`, \`title\`) per comprendere il significato semantico di ciascun campo e del suo \`id\`.
+
+2.  **Analizza il Testo Libero:**
+    *   Leggi attentamente il "Testo Libero".
+    *   Identifica entità, valori, e frammenti di testo che potrebbero corrispondere ai campi del form. Considera sinonimi, variazioni e contesto.
+    *   Esempio: Se il form ha un campo "Nome Cognome" e il testo dice "Il cliente è Mario Rossi", dovrai estrarre "Mario Rossi".
+
+3.  **Effettua il Mapping Semantico:**
+    *   Associa i valori estratti dal "Testo Libero" ai campi del "Form HTML Semplificato" (identificati dal loro \`id\`).
+    *   La mappatura deve essere basata sul significato. Ad esempio, un numero di telefono nel testo dovrebbe essere mappato a un campo etichettato come "Telefono" o "Numero di Contatto" nel form.
+    *   Se un'informazione nel testo può riempire più campi (es. un indirizzo completo vs. campi separati per via, città, CAP), cerca di essere il più specifico possibile o, se il form lo richiede, componi il valore (es. "Via Roma 1, 12345 Città").
+
+4.  **Gestione di Dati Mancanti o Ambigui:**
+    *   Se un'informazione per un campo del form non è presente nel testo, ometti quel campo dal mapping.
+    *   Se un'informazione è ambigua, cerca di fare la scelta più probabile o ometti il mapping se troppo incerto.
+
+5.  **Formato Output RICHIESTO (JSON Array):**
+    *   Restituisci ESCLUSIVAMENTE un array JSON valido contenente oggetti.
+    *   Ogni oggetto NELL'ARRAY DEVE avere ESATTAMENTE due chiavi:
+        *   \`"id"\`: La stringa dell'attributo \`id\` del campo HTML a cui mappare il valore. Usa SOLO gli \`id\` effettivamente presenti nel Form HTML fornito. Non inventare \`id\`.
+        *   \`"valore"\`: Il valore estratto dal "Testo Libero" che corrisponde semanticamente a quel campo.
+            *   Per campi di testo, textarea, select: il valore testuale estratto.
+            *   Per checkbox/radio: se il testo implica un'attivazione (es., "confermo i termini", "sì"), usa "OK" (o il valore specifico del radio button se presente ed estraibile). Se implica una disattivazione (es. "non accetto"), usa "KO". Se il testo non è chiaro, ometti.
+
+6.  **Precisione e Completezza:**
+    *   Sforzati di mappare quanti più campi possibili, ma privilegia la correttezza rispetto alla completezza.
+    *   Non includere mapping di cui non sei ragionevolmente sicuro.
+
+7.  **Output Pulito:**
+    *   Restituisci SOLO l'array JSON. Non includere commenti, spiegazioni, o testo narrativo aggiuntivo al di fuori dell'array JSON. Non usare wrapper markdown (come \`\`\`json ... \`\`\`).
+
+**Esempio di Output Atteso (basato su ipotetico form e testo):**
+\`\`\`json
+[
+  { "id": "user_name", "valore": "Mario Rossi" },
+  { "id": "user_email", "valore": "mario.rossi@example.com" },
+  { "id": "accept_terms_checkbox", "valore": "OK" },
+  { "id": "country_select", "valore": "Italia" }
+]
+\`\`\`
+
+Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di mapping come specificato.`;
+    }
+
 
     function createTextToFormMappingPrompt(htmlForm, unstructuredText) {
         return `
@@ -717,6 +811,7 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
             const results = await chrome.scripting.executeScript({
                 target: { tabId: tab.id },
                 func: (dataToAssign) => {
+                func: (dataToAssign) => {
                     if (typeof window.assignFormValuesInPage === 'function') {
                         return window.assignFormValuesInPage(dataToAssign);
                     } else {
@@ -733,6 +828,7 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
                 if (assignmentsCount > 0 && notFoundCount === 0) statusType = 'success';
                 else if (assignmentsCount > 0 && notFoundCount > 0) { statusType = 'warning'; statusMsg += " Alcuni campi non trovati o con errori."; }
                 else if (assignmentsCount === 0 && notFoundCount > 0) { statusType = 'error'; statusMsg = `❌ Assegnazione fallita. Nessun campo trovato o compilato. Errori/Non Trovati: ${notFoundCount}.`; }
+                if (errorMessages && errorMessages.length > 0) debugLog("Dettagli assegnazione (errori/non trovati):", errorMessages);
                 if (errorMessages && errorMessages.length > 0) debugLog("Dettagli assegnazione (errori/non trovati):", errorMessages);
                 showStatus(statusMsg, statusType, 7000);
             } else {
@@ -773,6 +869,7 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
     }
 
     function preprocessJsonForDirectAssignment(parsedJsonInput) {
+    function preprocessJsonForDirectAssignment(parsedJsonInput) {
         const extractedPairs = [];
         if (Array.isArray(parsedJsonInput) && parsedJsonInput.every(item =>
             typeof item === 'object' && item !== null &&
@@ -811,6 +908,19 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
                 }
             }
         }
+        } else if (typeof parsedJsonInput === 'object' && parsedJsonInput !== null) {
+            for (const key of commonInnerArrayKeys) {
+                if (key in parsedJsonInput && Array.isArray(parsedJsonInput[key])) {
+                    parsedJsonInput[key].forEach(field => {
+                        if (typeof field === 'object' && field !== null &&
+                            'id' in field && typeof field.id === 'string' && field.id.trim() !== '' &&
+                            'valore' in field) {
+                            extractedPairs.push({ id: field.id, valore: field.valore });
+                        }
+                    });
+                }
+            }
+        }
         return extractedPairs;
     }
 
@@ -824,6 +934,7 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody)
         });
         if (!response.ok) {
@@ -835,9 +946,12 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
         }
         const data = await response.json();
         if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+        if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
             return data.candidates[0].content.parts[0].text;
         } else if (data.candidates && data.candidates[0]?.finishReason && data.candidates[0].finishReason !== 'STOP') {
+        } else if (data.candidates && data.candidates[0]?.finishReason && data.candidates[0].finishReason !== 'STOP') {
             const reason = data.candidates[0].finishReason;
+            let safetyRatingsInfo = data.candidates[0].safetyRatings ? " SafetyRatings: " + JSON.stringify(data.candidates[0].safetyRatings) : "";
             let safetyRatingsInfo = data.candidates[0].safetyRatings ? " SafetyRatings: " + JSON.stringify(data.candidates[0].safetyRatings) : "";
             throw new Error(`Generazione Google (${modelName}) interrotta: ${reason}.${safetyRatingsInfo}`);
         } else {
@@ -851,6 +965,7 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
             model: modelName,
             messages: [
                 { role: "system", content: "Sei un assistente AI specializzato nell'analisi di form HTML, dati JSON e testo libero per creare mapping semantici. Rispondi SOLO con l'array JSON richiesto, senza testo aggiuntivo e senza wrapper markdown." },
+                { role: "system", content: "Sei un assistente AI specializzato nell'analisi di form HTML, dati JSON e testo libero per creare mapping semantici. Rispondi SOLO con l'array JSON richiesto, senza testo aggiuntivo e senza wrapper markdown." },
                 { role: "user", content: prompt }
             ],
         };
@@ -860,10 +975,12 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
         const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify(requestBody) });
         if (!response.ok) {
             const errorBody = await response.json();
+            const errorBody = await response.json();
             throw new Error(`Errore API OpenAI (${modelName}): ${response.status} ${response.statusText}. Dettagli: ${errorBody.error?.message || JSON.stringify(errorBody)}`);
         }
         const data = await response.json();
         if (data.choices && data.choices[0]?.message?.content) {
+            return data.choices[0].message.content;
             return data.choices[0].message.content;
         } else {
             throw new Error(`Struttura risposta API OpenAI (${modelName}) non valida.`);
@@ -897,7 +1014,10 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
             const result = await chrome.storage.session.get(SESSION_STATE_KEY);
             const savedState = result[SESSION_STATE_KEY];
 
+
             extractFormsWithAiButton.disabled = false;
+            mapWithAiButton.disabled = false;
+
             mapWithAiButton.disabled = false;
 
             if (savedState) {
@@ -1033,7 +1153,10 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
                 aiConfig = result[AI_CONFIG_KEY];
                 llmModelSelect.value = Array.from(llmModelSelect.options).some(opt => opt.value === aiConfig.model) ? aiConfig.model : 'none';
                 if (llmModelSelect.value === 'none') aiConfig.model = 'none';
+                llmModelSelect.value = Array.from(llmModelSelect.options).some(opt => opt.value === aiConfig.model) ? aiConfig.model : 'none';
+                if (llmModelSelect.value === 'none') aiConfig.model = 'none';
                 apiKeyInput.value = aiConfig.apiKey || '';
+            }
             }
         } catch (error) {
             console.error('Errore caricamento configurazione AI:', error);
@@ -1052,8 +1175,11 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
         try {
             await chrome.storage.local.set({ [AI_CONFIG_KEY]: aiConfig });
             showStatus('✅ Configurazione AI salvata!', 'success');
+            showStatus('✅ Configurazione AI salvata!', 'success');
             if (aiConfig.model !== 'none' && aiConfig.apiKey) {
                 showStatus('🤖 AI configurata! Ora puoi usare le funzionalità potenziate.', 'success', 4000);
+            } else if (aiConfig.model === 'none') {
+                showStatus('ℹ️ Configurazione AI disabilitata/resettata.', 'info', 4000);
             } else if (aiConfig.model === 'none') {
                 showStatus('ℹ️ Configurazione AI disabilitata/resettata.', 'info', 4000);
             }
@@ -1089,7 +1215,19 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
         });
     }
 
+        applySourceChangesButton.addEventListener('click', () => {
+            currentHtmlContent = cleanHtmlFromTextareaFormatting(htmlSourceTextarea.value);
+            previewFrame.srcdoc = currentHtmlContent;
+            htmlSourceTextarea.value = formatHtmlForTextarea(currentHtmlContent);
+            showStatus('✅ Modifiche codice sorgente applicate.', 'success');
+            saveSessionState();
+        });
+    }
+
     extractFormsButton.addEventListener('click', async () => {
+        await performAlgorithmicExtraction(false);
+    });
+
         await performAlgorithmicExtraction(false);
     });
 
@@ -1106,11 +1244,15 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
         extractFormsWithAiButton.disabled = true;
         try {
             await performAiExtraction(false);
+        extractFormsWithAiButton.disabled = true;
+        try {
+            await performAiExtraction(false);
         } finally {
             extractFormsWithAiButton.disabled = false;
         }
     });
 
+    function handleLoadFile(event, targetTextarea, acceptedExtension, mimeType, statusPrefix) {
     function handleLoadFile(event, targetTextarea, acceptedExtension, mimeType, statusPrefix) {
         const file = event.target.files[0];
         if (!file) return;
@@ -1142,10 +1284,13 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
             } catch (jsonError) {
                 showStatus(`❌ File "${file.name}" non è JSON valido: ${jsonError.message}`, 'error', 7000);
                 targetTextarea.value = '';
+                targetTextarea.value = '';
             }
         };
         reader.onerror = () => {
+        reader.onerror = () => {
             showStatus(`❌ Errore lettura file "${file.name}".`, 'error');
+            targetTextarea.value = '';
             targetTextarea.value = '';
         };
         reader.readAsText(file);
@@ -1243,8 +1388,14 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
 
         mapWithAiButton.disabled = true;
         let llmResponseString = '';
+        let llmResponseString = '';
 
         try {
+            const prompt = promptFunction(currentHtmlContent, inputDataString);
+            if (aiConfig.model.startsWith('gemini-') || aiConfig.model.startsWith('gemma-')) {
+                llmResponseString = await callGoogleApi(aiConfig.model, prompt, aiConfig.apiKey);
+            } else if (aiConfig.model.startsWith('openai-')) {
+                llmResponseString = await callOpenAiApi(aiConfig.model.substring('openai-'.length), prompt, aiConfig.apiKey);
             const prompt = promptFunction(currentHtmlContent, inputDataString);
             if (aiConfig.model.startsWith('gemini-') || aiConfig.model.startsWith('gemma-')) {
                 llmResponseString = await callGoogleApi(aiConfig.model, prompt, aiConfig.apiKey);
@@ -1254,20 +1405,39 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
                 throw new Error('Modello AI non supportato.');
             }
 
+
             const suggestedMappingJson = extractJsonFromString(llmResponseString);
             if (!suggestedMappingJson) {
+                throw new Error(`L'AI (${aiConfig.model}) non ha restituito JSON valido. Risposta: ${llmResponseString}`);
                 throw new Error(`L'AI (${aiConfig.model}) non ha restituito JSON valido. Risposta: ${llmResponseString}`);
             }
             if (!Array.isArray(suggestedMappingJson)) {
                 throw new Error(`Output AI (${aiConfig.model}) non è array JSON. Output: ${JSON.stringify(suggestedMappingJson)}`);
+                throw new Error(`Output AI (${aiConfig.model}) non è array JSON. Output: ${JSON.stringify(suggestedMappingJson)}`);
             }
+            if (!suggestedMappingJson.every(item =>
             if (!suggestedMappingJson.every(item =>
                 typeof item === 'object' && item !== null &&
                 'id' in item && typeof item.id === 'string' && 'valore' in item
             )) {
                 throw new Error(`Oggetti JSON AI (${aiConfig.model}) non format {id: string, valore: any}. Output: ${JSON.stringify(suggestedMappingJson)}`);
+                'id' in item && typeof item.id === 'string' && 'valore' in item
+            )) {
+                throw new Error(`Oggetti JSON AI (${aiConfig.model}) non format {id: string, valore: any}. Output: ${JSON.stringify(suggestedMappingJson)}`);
             }
 
+            if (debugMode) {
+                aiOutputTextarea.value = JSON.stringify(suggestedMappingJson, null, 2);
+                aiOutputContainer.classList.remove('hidden');
+                applyAiMappingButton.disabled = false;
+                resetAiMappingButton.disabled = false;
+                showStatus(`🎯 Mapping da ${aiConfig.model} (da ${inputTypeForStatus}) completato.`, 'success');
+                aiOutputContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                // In modalità produzione, applica direttamente il mapping
+                setLoading(false);
+                await assignValuesToPage(suggestedMappingJson);
+            }
             if (debugMode) {
                 aiOutputTextarea.value = JSON.stringify(suggestedMappingJson, null, 2);
                 aiOutputContainer.classList.remove('hidden');
@@ -1286,8 +1456,16 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
                 aiOutputTextarea.value = `Errore: ${error.message}\n\nRisposta:\n${llmResponseString || 'Nessuna risposta.'}`;
                 aiOutputContainer.classList.remove('hidden');
             }
+            showStatus(`❌ Errore Mapping AI (${aiConfig.model} da ${inputTypeForStatus}): ${error.message}`, 'error', 10000);
+            if (debugMode) {
+                aiOutputTextarea.value = `Errore: ${error.message}\n\nRisposta:\n${llmResponseString || 'Nessuna risposta.'}`;
+                aiOutputContainer.classList.remove('hidden');
+            }
         } finally {
             mapWithAiButton.disabled = false;
+            if (!debugMode) {
+                setLoading(false);
+            }
             if (!debugMode) {
                 setLoading(false);
             }
@@ -1307,8 +1485,10 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
         const jsonDataString = dataInputUnified.value.trim(); // Read from unified textarea
         if (!jsonDataString) {
             showStatus('⚠️ Area dati JSON Input vuota per assegnazione diretta.', 'warning');
+            showStatus('⚠️ Area dati JSON Input vuota per assegnazione diretta.', 'warning');
             return;
         }
+
 
         let parsedJsonInput;
         try {
@@ -1319,7 +1499,9 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
         }
 
         const processedData = preprocessJsonForDirectAssignment(parsedJsonInput);
+        const processedData = preprocessJsonForDirectAssignment(parsedJsonInput);
         if (processedData.length === 0) {
+            showStatus('⚠️ Nessuna coppia id/valore estraibile dal JSON fornito per assegnazione diretta. Assicurati che il formato sia `[{"id": "...", "valore": "..."}]` o una struttura comune che lo contenga.', 'warning', 10000);
             showStatus('⚠️ Nessuna coppia id/valore estraibile dal JSON fornito per assegnazione diretta. Assicurati che il formato sia `[{"id": "...", "valore": "..."}]` o una struttura comune che lo contenga.', 'warning', 10000);
             return;
         }
@@ -1328,7 +1510,16 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
             setLoading(true, 'Compilazione automatica in corso...');
         }
 
+
+        if (!debugMode) {
+            setLoading(true, 'Compilazione automatica in corso...');
+        }
+
         await assignValuesToPage(processedData);
+
+        if (!debugMode) {
+            setLoading(false);
+        }
 
         if (!debugMode) {
             setLoading(false);
@@ -1351,7 +1542,58 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
             }
             await assignValuesToPage(parsedAiData);
         });
+    if (debugMode) {
+        applyAiMappingButton.addEventListener('click', async () => {
+            const aiJsonString = aiOutputTextarea.value.trim();
+            if (!aiJsonString) {
+                showStatus('⚠️ Nessun mapping JSON da AI da assegnare.', 'warning');
+                return;
+            }
+            let parsedAiData;
+            try {
+                parsedAiData = JSON.parse(aiJsonString);
+            } catch (error) {
+                showStatus(`❌ Errore parsing JSON da AI: ${error.message}`, 'error', 7000);
+                return;
+            }
+            await assignValuesToPage(parsedAiData);
+        });
 
+        resetAiMappingButton.addEventListener('click', () => {
+            aiOutputTextarea.value = '';
+            aiOutputContainer.classList.add('hidden');
+            applyAiMappingButton.disabled = true;
+            resetAiMappingButton.disabled = true;
+            showStatus('🗑️ Mapping AI resettato.', 'info');
+            saveSessionState();
+        });
+
+        copyButton.addEventListener('click', () => {
+            const isSourceView = !htmlSourceTextarea.classList.contains('hidden');
+            const contentToCopy = isSourceView ? htmlSourceTextarea.value : formatHtmlForTextarea(currentHtmlContent || '');
+            if (contentToCopy && !copyButton.disabled) {
+                navigator.clipboard.writeText(contentToCopy)
+                    .then(() => showStatus('📋 HTML copiato!', 'success'))
+                    .catch(err => {
+                        showStatus('❌ Errore copia HTML.', 'error');
+                        try {
+                            const ta = document.createElement('textarea');
+                            ta.value = contentToCopy;
+                            ta.style.position = 'fixed';
+                            document.body.appendChild(ta);
+                            ta.focus();
+                            ta.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(ta);
+                            showStatus('📋 HTML copiato (fallback)!', 'success');
+                        } catch (e) {
+                            showStatus('❌ Copia fallita.', 'error');
+                        }
+                    });
+            } else {
+                showStatus('ℹ️ Nessun HTML da copiare.', 'info');
+            }
+        });
         resetAiMappingButton.addEventListener('click', () => {
             aiOutputTextarea.value = '';
             aiOutputContainer.classList.add('hidden');
@@ -1416,8 +1658,44 @@ Analizza ora il Form HTML e il Testo Libero forniti e genera l'array JSON di map
             }
         });
     }
+        saveButton.addEventListener('click', () => {
+            const isSourceView = !htmlSourceTextarea.classList.contains('hidden');
+            const contentToSave = isSourceView ? htmlSourceTextarea.value : formatHtmlForTextarea(currentHtmlContent || '');
+            if (contentToSave && !saveButton.disabled) {
+                const pageName = pageNameInput.value.trim() || 'extracted_forms';
+                const filename = sanitizeFilenameForSave(pageName) + '.html';
+                const fileContent = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>${pageName.replace(/</g, "&lt;").replace(/>/g, "&gt;")} - Forms</title><style>body{font-family:sans-serif;line-height:1.6;padding:20px;background:#f4f4f4}h3{color:#3498db; margin-top: 2em; margin-bottom: 0.5em;}form{background:#fff;border:1px solid #ddd;border-radius:8px;padding:20px;margin-bottom:20px}label{display:block;margin-bottom:5px;font-weight:bold;}input,textarea,select{width:95%;max-width:400px;padding:8px;margin-bottom:10px;border:1px solid #ccc;border-radius:4px;box-sizing: border-box;}input[type="checkbox"], input[type="radio"] {width: auto; margin-right: 5px; vertical-align: middle;} fieldset{margin-top:1em; margin-bottom:1em; padding:1em; border:1px solid #ccc;} legend{font-weight:bold; color:#3498db; padding: 0 0.5em;} hr{margin:20px 0;border:1px dashed #ccc}</style></head><body><h2>${pageName.replace(/</g, "&lt;").replace(/>/g, "&gt;")} - Forms Estratti</h2>${contentToSave}</body></html>`;
+                const blob = new Blob([fileContent], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                chrome.downloads.download({
+                    url: url,
+                    filename: filename,
+                    saveAs: true
+                }, (downloadId) => {
+                    URL.revokeObjectURL(url);
+                    if (chrome.runtime.lastError) {
+                        showStatus(`❌ Errore salvataggio: ${chrome.runtime.lastError.message}`, 'error');
+                    } else if (downloadId) {
+                        showStatus(`💾 Download "${filename}" avviato.`, 'success');
+                    } else {
+                        showStatus(`⚠️ Download "${filename}" non avviato o annullato.`, 'warning', 7000);
+                    }
+                });
+            } else {
+                showStatus('ℹ️ Nessun HTML da salvare.', 'info');
+            }
+        });
+    }
 
     // --- Inizializzazione ---
+    async function initialize() {
+        await initializeUIMode();
+        setupCollapsibles();
+        await loadAiConfig();
+        await loadSessionState();
+    }
+
+    initialize();
     async function initialize() {
         await initializeUIMode();
         setupCollapsibles();
