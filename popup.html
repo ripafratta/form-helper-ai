@@ -22,6 +22,7 @@
     body {
       padding: 20px;
       box-sizing: border-box;
+      background-color: #e9ecef;
     }
 
     /* Contenitore principale per lo scrolling */
@@ -534,10 +535,10 @@
 
   <!-- Header minimalista -->
   <div class="main-header">
-    <p>Estrazione intelligente e compilazione automatica dei form web</p>
-    <a href="#" class="config-link" id="configToggle">Configura AI</a>
+    <!-- <p>Analizza e compila il form web</p> -->
+    <a href="#" class="config-link" id="configToggle">Configura API LLM</a>
   </div>
-
+  
   <!-- AI Configuration (collapsible) -->
   <div id="aiConfigContent">
     <div class="config-item">
@@ -545,10 +546,8 @@
       <select id="llmModelSelect">
         <option value="none">Nessuno / Disabilitato</option>
         <optgroup label="Google Gemini & Gemma">
-          <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash (Veloce)</option>
-          <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro (Potente)</option>
-          <option value="gemini-2.5-pro-preview-05-06">Gemini 2.5 Pro (Preview 05-06)</option>
-          <option value="gemini-2.5-flash-preview-04-17">Gemini 2.5 Flash (Preview 04-17)</option>
+          <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+          <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
           <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
           <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite</option>
           <option value="gemma-3-27b-it">Gemma 3 27B IT</option>
@@ -573,7 +572,7 @@
   <div id="mainContentContainer">
     <!-- Tab Navigation -->
     <div class="tabs-container">
-      <div class="tab active" data-tab="extractionSection">Estrai Form</div>
+      <div class="tab active" data-tab="extractionSection">Analizza il Form</div>
       <div class="tab" data-tab="fillingSection">Compila il Form</div>
     </div>
 
@@ -581,25 +580,22 @@
     <div class="section debug-only tab-content active" id="extractionSection">
       <div class="section-content" id="extractionContent">
         <div class="info-text">
-          Estrai la form HTML della pagina corrente utilizzando algoritmi deterministici o analisi AI avanzata.
+          Analisi del form della pagina corrente utilizzando algoritmi deterministici o analisi AI avanzata.
         </div>
         <div class="content-area">
           <div class="button-group">
             <button id="extractFormsButton" class="btn btn-secondary">
-              Estrazione Algoritmica
+              Analisi Algoritmica
             </button>
             <button id="extractFormsWithAiButton" class="btn btn-primary">
-              Estrazione AI Avanzata
+              Analisi AI Avanzata
             </button>
           </div>
-
-          <label for="pageNameInput">Nome Pagina (per salvataggio HTML):</label>
-          <input type="text" id="pageNameInput" placeholder="Es: pagina_login_mio_sito">
         </div>
 
         <div id="outputContainer" class="content-area">
           <div class="section-header">
-            <h3>Output Form Estratti</h3>
+            <h4>Output Form Analizzato</h4>
             <div class="view-toggle-controls">
               <label class="view-toggle-label">
                 <input type="radio" name="viewMode" value="preview" checked>
@@ -614,10 +610,13 @@
           <iframe id="previewFrame" sandbox="allow-forms allow-same-origin"></iframe>
           <textarea id="htmlSourceTextarea" class="hidden"
             placeholder="Il codice HTML estratto apparirà qui..."></textarea>
+          <div style="margin-top: 15px;">
+            <label for="pageNameInput">Nome Pagina (per salvataggio HTML):</label>
+            <input type="text" id="pageNameInput" placeholder="Es: pagina_login_mio_sito" style="width: 100%;">
+          </div>
         </div>
 
         <div id="actions" class="content-area">
-          <h3>Azioni sull'HTML Estratto</h3>
           <div class="button-group">
             <button id="applySourceChangesButton" class="btn btn-secondary hidden">
               Applica Modifiche al Codice
@@ -658,22 +657,22 @@
 
         <!-- Unified Data Input Container -->
         <div class="content-area">
-          <h3>Dati Input</h3>
-          <textarea id="dataInputUnified" placeholder='Incolla qui i dati JSON (per assegnazione diretta o mapping AI) o testo libero (per mapping AI).
+          <h4>Dati Input</h4>
+          <textarea id="dataInputUnified" placeholder='Incolla qui il testo o il codice JSON.
 
-Formato JSON per assegnazione diretta:
+Formato JSON con campi id valorizzati:
 [
   { "id": "campo1", "valore": "Valore1" },
   { "id": "campo2", "valore": "Valore2" }
 ]
 
-Formato JSON flessibile per mapping AI:
+Formato JSON libero (scegli mapping AI):
 [
   { "descrizione": "Nome utente", "valore_dato": "Mario" },
   { "descrizione": "Email", "valore_dato": "mario@email.com" }
 ]
 
-Testo libero per mapping AI:
+Formato Testo libero (scegli mapping AI):
 "Mario Rossi, nato il 01/01/1990, email: mario.rossi@example.com"
 (L\'AI cercherà di estrarre e mappare i valori.)'></textarea>
         </div>
@@ -681,7 +680,7 @@ Testo libero per mapping AI:
         <!-- Combined Button Group -->
         <div class="button-group">
             <button id="assignDirectJsonValuesButton" class="btn btn-secondary">
-              Assegnazione Diretta (da JSON)
+              Mapping id campi JSON 
             </button>
             <button id="mapWithAiButton" class="btn btn-primary">
               Mapping AI Semantico
@@ -690,7 +689,7 @@ Testo libero per mapping AI:
 
         <!-- AI Output Container - VISIBILE SOLO IN DEBUG MODE -->
         <div id="aiOutputContainer" class="content-area hidden debug-only">
-          <h3 id="aiOutputTitle">Mapping Dati Suggerito dall'AI</h3>
+          <h4 id="aiOutputTitle">Mapping Dati Suggerito dall'AI</h4>
           <div id="aiOutputInfo" class="info-text">
             L'AI ha analizzato i tuoi dati e i campi del form per creare il mapping ottimale.
           </div>
@@ -710,7 +709,7 @@ Testo libero per mapping AI:
   </div> <!-- Fine #mainContentContainer -->
 
   <!-- Status message -->
-  <div id="statusMessage">Benvenuto in Form Helper AI!</div>
+  <div id="statusMessage">Benvenuto in Form Helper AI</div>
 
   <!-- Loading overlay - solo per modalità produzione -->
   <div id="loadingOverlay" class="loading-overlay hidden">

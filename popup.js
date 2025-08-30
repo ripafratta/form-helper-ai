@@ -32,6 +32,15 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize tabs
     setupTabs();
     
+    // Config Toggle
+    const configToggle = document.getElementById('configToggle');
+    const aiConfigContent = document.getElementById('aiConfigContent');
+    
+    configToggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        aiConfigContent.classList.toggle('open');
+    });
+    
     // --- Elementi UI ---
     const extractFormsButton = document.getElementById('extractFormsButton');
     const extractFormsWithAiButton = document.getElementById('extractFormsWithAiButton');
@@ -43,9 +52,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const copyButton = document.getElementById('copyButton');
     const saveButton = document.getElementById('saveButton');
     const statusMessage = document.getElementById('statusMessage');
-
-    const configToggle = document.getElementById('configToggle');
-    const aiConfigContent = document.getElementById('aiConfigContent');
 
     // AI Config
     const llmModelSelect = document.getElementById('llmModelSelect');
