@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "HTML Form Helper AI", 
-  "version": "4.1", 
-  "description": "Estrae form HTML, li ripulisce, aiuta nella compilazione con dati JSON e usa l'AI per il mapping semantico.",
+  "version": "5.0", 
+  "description": "analizza ed estrae i form della pagina HTML, li ripulisce, aiuta nella compilazione automatica con dati JSON usando i valori degli id oppure un LLM per il mapping semantico.",
   "permissions": [
     "activeTab",
     "scripting",
