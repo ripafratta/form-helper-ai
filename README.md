@@ -1,229 +1,40 @@
 # HTML Form Helper
 
-Estensione per Google Chrome con due funzionalità di base:
+Estensione Chrome per estrarre, modificare e compilare form HTML automaticamente. Supporta estrazione algoritmica e potenziata da AI (LLM) per mapping semantico.
 
- * Estrarre dalla pagina web la struttura dei form HTML, permette di visualizzarne e modificarne il codice sorgente semplificato, salvarlo;
- * Compilare in modo automatico i campi del form utilizzando dati strutturati (JSON) o semplice testo.
+## Table of Contents
+- [Quick Start](#quick-start)
+- [Prerequisiti](#prerequisiti)
+- [Installazione](#installazione)
+- [Utilizzo](#utilizzo)
+- [Formato Dati JSON](#formato-dati-json)
+- [Configurazione AI](#configurazione-ai)
+- [Compatibilità e Limitazioni](#compatibilit%C3%A0-e-limitazioni)
+- [Sicurezza e Privacy](#sicurezza-e-privacy)
+- [Risoluzione Problemi](#risoluzione-problemi)
+- [Contributing](#contributing)
+- [License](#license)
+- [Dettagli Tecnici](#dettagli-tecnici)
 
- Entrambe le due funzionalità supportano due diversi tipi di utilizzo:
+## Quick Start
 
- * 
+1. Clona il repository:
+   - git clone https://github.com/<owner>/form-helper-ai.git
+2. Apri Chrome (o browser compatibile) e vai su chrome://extensions/
+3. Abilita "Modalità sviluppatore" e clicca "Carica unpacked"
+4. Seleziona la cartella del progetto (quella contenente manifest.json)
+5. Apri una pagina web con un form e clicca l'icona dell'estensione per iniziare
 
-## Funzionalità di Estrazione
+Nota: se hai script di build (es. TypeScript/Webpack), esegui build prima del passo 3:
+- npm install
+- npm run build
 
-*   **Estrazione Form:** Identifica e estrae i form HTML presenti nella pagina attiva con algoritmi avanzati di riconoscimento.
-*   **Estrazione Form con AI:** Utilizza modelli AI (LLM) per analizzare il DOM completo della pagina e estrarre form intelligentemente con associazione automatica delle etichette.
-*   **Semplificazione HTML:** Rimuove elementi e attributi non essenziali per ottenere una struttura pulita e focalizzata sui campi compilabili.
-*   **Visualizzazione Flessibile:** Permette di passare tra una **Anteprima HTML** (rendering del codice estratto) e la visualizzazione del **Codice Sorgente** modificabile.
-*   **Modifica Codice Sorgente:** Nella vista codice sorgente, è possibile modificare l'HTML estratto. Le modifiche possono essere "applicate" per aggiornare la vista.
-*   **Copia HTML:** Copia negli appunti il codice HTML estratto e semplificato.
-*   **Salva HTML:** Salva l'HTML estratto come file `.html`, includendo stili CSS di base per una buona leggibilità.
+## Prerequisiti
 
-## Funzionalità di Compilazione
-
-*   **Caricamento Dati:** Carica i dati da usare per la compilazione del form da un file `.json`, in alternativa permette di incollarli direttamente in una textarea.
-*   **Assegnazione Valori:** Compila automaticamente il form della pagina web attiva utilizzando i dati caricati.
-*   **Messaggi di Stato:** Fornisce feedback visivo sull'esito delle operazioni.
-
-## Funzionalità AI avanzate
-
-*   **Configurazione AI:** Permette di selezionare un provider LLM (Google Gemini, OpenAI ChatGPT) e inserire la relativa chiave API.
-*   **Estrazione Form Intelligente:** Analizza il DOM completo della pagina utilizzando l'AI per identificare e estrarre form con associazione automatica delle etichette basata sul contesto semantico.
-*   **Mapping Semantico con AI:** Analizza l'HTML del form estratto e i dati JSON forniti dall'utente utilizzando l'LLM configurato per creare mapping semantici intelligenti.
-*   **Revisione del Mapping:** Il JSON generato dall'AI viene mostrato per controllo e modifica prima dell'applicazione.
-*   **Assegnazione Valori Mappati dall'AI:** Applica i valori utilizzando il JSON mappato dall'AI.
-
-## Metodologie di Estrazione Form
-
-### 1. Estrazione Algoritmica (Pulsante "Estrai Forms")
-
-Utilizza algoritmi JavaScript deterministici per l'estrazione rapida e precisa:
-
-#### Algoritmo di Riconoscimento Form
-
-L'estensione utilizza un **sistema a doppio livello** per identificare e estrarre i form:
-
-##### **Form Standard (`<form>`)**
-- Rileva tutti gli elementi `<form>` presenti nella pagina
-- Estrae la struttura interna preservando la gerarchia semantica
-- Mantiene attributi essenziali: `id`, `name`, `action`, `method`
-
-##### **Form Logici (Pattern Recognition)**
-L'estensione identifica anche **contenitori logici** che funzionano come form senza utilizzare il tag `<form>`:
-
-**Criteri di Identificazione:**
-- Elementi con `role="form"` o `role="search"`
-- Contenitori con almeno 2 campi input O 1 campo input + 1 button
-- Fieldset con elementi interattivi
-- Sezioni con attributi `aria-label` o `aria-labelledby`
-
-**Filtri di Qualità:**
-- Esclude contenitori troppo generici (>500 caratteri di testo, >30 elementi figli)
-- Verifica la densità di elementi interattivi
-- Controlla la visibilità degli elementi
-
-#### Sistema di Associazione Etichette
-
-L'estensione utilizza un **algoritmo gerarchico a 5 livelli** per associare etichette ai campi:
-
-##### **Livello 1: Associazione Diretta (Priorità Massima)**
-```html
-<label for="campo1">Nome</label>
-<input id="campo1" type="text">
-```
-
-##### **Livello 2: ARIA Labelledby**
-```html
-<div id="etichetta">Email</div>
-<input aria-labelledby="etichetta" type="email">
-```
-
-##### **Livello 3: ARIA Label**
-```html
-<input aria-label="Telefono" type="tel">
-```
-
-##### **Livello 4: Componente Wrapper (Frameworks Moderni)**
-Per framework come Angular, React, Vue:
-```html
-<p-calendar aria-label="Data Nascita">
-  <input id="data" type="tel">
-</p-calendar>
-```
-
-**Pattern Riconosciuti:**
-- `<label>Testo</label><custom-component>...</custom-component>`
-- `<div>Etichetta:</div><wrapper><input></wrapper>`
-- Componenti con prefissi: `p-`, `app-`, `sdk-`, `mat-`, `ion-`, `ng-`, `v-`, `react-`
-
-##### **Livello 5: Label Wrappante (Ultima Risorsa)**
-```html
-<label>
-  Nome Completo
-  <input type="text">
-</label>
-```
-
-#### Estrazione Testo Etichette
-
-**Algoritmo di Pulizia del Testo:**
-1. **Rimozione Elementi Interattivi:** Elimina input, button, select annidati
-2. **Gestione Commenti:** Ignora commenti HTML/Angular (`<!---->`)
-3. **Estrazione Nodi Testo:** Naviga ricorsivamente i nodi DOM
-4. **Fallback al Title:** Usa l'attributo `title` se il testo non è disponibile
-5. **Normalizzazione:** Rimuove spazi eccessivi e caratteri di separazione finali
-
-### 2. Estrazione AI-Powered (Pulsante "Estrai Forms con AI")
-
-Utilizza modelli linguistici avanzati per un'analisi semantica approfondita del DOM:
-
-#### Vantaggi dell'Estrazione AI
-
-**Comprensione Semantica Avanzata:**
-- Analizza il contesto completo della pagina per identificare form nascosti o non convenzionali
-- Riconosce pattern complessi di associazione etichetta-campo basati sul significato del contenuto
-- Gestisce strutture HTML dinamiche e framework moderni con maggiore precisione
-
-**Associazione Etichette Intelligente:**
-- Deduce etichette dal contesto anche quando mancano associazioni esplicite
-- Interpreta testi descrittivi, titoli di sezione e contenuti correlati
-- Risolve ambiguità di associazione utilizzando il significato semantico
-
-**Gestione Framework Avanzata:**
-- Riconosce componenti personalizzati di framework JavaScript moderni
-- Identifica form generati dinamicamente e single-page applications
-- Estrae form da shadow DOM e strutture component-based
-
-#### Processo di Estrazione AI
-
-1. **Analisi DOM Completa:** L'AI riceve l'intero documento HTML della pagina
-2. **Identificazione Form Intelligente:** Utilizza comprensione semantica per identificare tutti i form, anche quelli non convenzionali
-3. **Associazione Etichette Contestuale:** Associa etichette basandosi sul significato e sul contesto semantico
-4. **Generazione HTML Strutturato:** Produce HTML semplificato ottimizzato con etichette associate correttamente
-
-#### Modelli AI Supportati
-
-**Google Gemini:**
-- Gemini 1.5 Flash (Veloce, ottimizzato per task rapidi)  
-- Gemini 1.5 Pro (Potente, analisi approfondita)
-- Gemini 2.5 Pro/Flash (Versioni avanzate in preview)
-- Gemma 3 (Modelli open-source: 27B, 12B, 4B IT)
-
-**OpenAI ChatGPT:**
-- GPT-4o (Nuovo modello multimodale ottimizzato)
-- GPT-4 Turbo (Modello potente per task complessi)
-- GPT-3.5 Turbo (Bilanciato tra prestazioni e costi)
-
-#### Prompt Engineering Avanzato
-
-L'estensione utilizza prompt strutturati che includono:
-
-**Istruzioni Dettagliate di Estrazione:**
-- Regole precise per identificazione form standard e logici
-- Criteri di inclusione/esclusione elementi
-- Priorità gerarchiche per associazione etichette
-
-**Gestione Visibilità e Stato:**
-- Inclusione elementi nascosti con attributi significativi
-- Esclusione campi readonly e disabled
-- Preservazione semantica per tutti gli stati input
-
-**Formato Output Standardizzato:**
-- HTML semplificato con struttura coerente
-- Titoli descrittivi per ogni form identificato
-- Separatori visivi tra form diverse
-
-#### Quando Utilizzare l'Estrazione AI
-
-**Raccomandato per:**
-- ✅ Pagine con form complessi o non convenzionali
-- ✅ Single Page Applications (SPA) e framework moderni
-- ✅ Form generati dinamicamente via JavaScript
-- ✅ Strutture component-based (React, Angular, Vue)
-- ✅ Pagine con associazioni etichetta-campo ambigue
-- ✅ Form con layout personalizzati o CSS complesso
-
-**L'estrazione algoritmica è sufficiente per:**
-- ✅ Form HTML standard ben strutturati
-- ✅ Pagine con markup semantico corretto
-- ✅ Form con associazioni label[for] esplicite
-- ✅ Strutture semplici e convenzionali
-
-### Elementi Processati ed Esclusi
-
-#### **Elementi Inclusi:**
-- ✅ `<input>` (tutti i tipi eccetto submit, reset, image, button)
-- ✅ `<input type="hidden">` **SEMPRE INCLUSO** (ignorando visibilità CSS)
-- ✅ `<textarea>`
-- ✅ `<select>` e `<option>`
-- ✅ `<fieldset>` e `<legend>`
-- ✅ `<label>` (con testo estratto pulito)
-- ✅ Elementi con ruoli: `textbox`, `combobox`, `listbox`, `checkbox`, `radio`, `switch`, `slider`
-
-#### **Elementi Esclusi:**
-- ❌ `<button>` (tutti i tipi)
-- ❌ `<input type="button|submit|reset|image">`
-- ❌ **`<input readonly>` e `<textarea readonly>`** - SEMPRE ESCLUSI
-- ❌ Elementi `disabled`
-- ❌ Elementi con ruoli: `button`, `spinbutton`, `searchbox`
-- ❌ Script, stili, metadata (`<script>`, `<style>`, `<head>`, etc.)
-- ❌ Elementi di navigazione (`<nav>`, `<header>`, `<footer>`)
-
-### Preservazione Semantica
-
-**Attributi Essenziali Mantenuti:**
-- Identificatori: `id`, `name`
-- Tipi e valori: `type`, `value`, `placeholder`
-- Stato: `required`, `checked`, `selected`, `disabled` (NON readonly)
-- Associazioni: `for`, `aria-label`, `aria-labelledby`
-- Vincoli: `min`, `max`, `step`, `pattern`, `multiple`
-- Accessibilità: `title`, `role`
-
-**Struttura HTML Preservata:**
-- Gerarchia form > fieldset > legend
-- Associazioni label-input
-- Tabelle con colspan/rowspan
-- Liste e raggruppamenti semantici
+- Chrome 100+ / Edge / Brave compatibile con manifest v3
+- Node.js (solo per sviluppo e build) — versione LTS consigliata
+- Connessione Internet per funzionalità AI
+- (Opzionale) API key per provider LLM (OpenAI / Google Gemini) quando si usa l'estrazione AI
 
 ## Installazione
 
@@ -396,6 +207,315 @@ L'estensione è ottimizzata per funzionare con:
 3. Assicurati che i campi non siano readonly o disabled
 4. Utilizza il mapping AI per associazioni complesse
 
-## Supporto e Contributi
+## Contributing
 
-Per segnalazioni bug, richieste di funzionalità o contributi al codice, consulta la documentazione del repository o contatta gli sviluppatori attraverso i canali ufficiali del progetto.
+Per contributi:
+- Apri issue per discutere la feature/bug prima di lavorare
+- Fork -> branch di feature -> PR verso main
+
+
+## Struttura del Progetto
+
+### File Principali
+- **`manifest.json`**: Configurazione estensione Chrome (manifest v3)
+- **`popup.html`**: Interfaccia utente principale con design moderno
+- **`popup.js`**: Logica JavaScript per gestione UI e comunicazione
+- **`content.js`**: Script iniettato nelle pagine web per estrazione e compilazione
+- **`config.json`**: Configurazione modalità debug
+- **`purify.min.js`**: Libreria per sanitizzazione HTML
+
+### Directory
+- **`icons/`**: Icone dell'estensione (16x16, 48x48, 128x128)
+- **`test/`**: File di test per validazione funzionalità
+- **`doc/`**: Documentazione aggiuntiva
+
+## File di Test
+
+La directory `test/` contiene esempi rappresentativi per testare le funzionalità:
+
+- **`form-registrazione.html`**: Form complesso con tutti i tipi di input supportati
+- **`form-registrazione.json`**: Dati strutturati per compilazione automatica
+- **`form-angular.html`**: Esempio form Angular con componenti PrimeNG
+- **`form-tabella.html`**: Form con struttura tabellare
+- **`form-collapsed.html`**: Form con elementi nascosti/collassati
+
+## Dettagli Tecnici Implementativi
+
+### Algoritmi di Estrazione
+
+#### Sistema di Riconoscimento Form
+L'estensione utilizza un approccio a **doppio livello**:
+
+1. **Form Standard**: Rilevamento elementi `<form>` con struttura gerarchica
+2. **Form Logici**: Identificazione contenitori che fungono da form senza tag `<form>`
+
+#### Sistema Gerarchico di Associazione Etichette
+Implementa 5 livelli di priorità per associare etichette ai campi:
+
+1. **Associazione Diretta** (`label[for="id"]`)
+2. **ARIA Labelledby** (referenze multiple)
+3. **ARIA Label** (attributo diretto)
+4. **Componente Wrapper** (pattern framework moderni)
+5. **Label Wrappante** (fallback)
+
+#### Supporto Framework Moderni
+Pattern riconosciuti per componenti custom:
+- Angular: `p-calendar`, `p-dropdown`, `p-inputtext`
+- React: `mat-`, `antd-`, `mui-`
+- Vue: `v-`, `el-`, `vuetify-`
+
+### Gestione Stato e Persistenza
+
+- **Session Storage**: Stato temporaneo dell'interfaccia
+- **Local Storage**: Configurazione AI e preferenze utente
+- **Auto-salvataggio**: Stato popup persistito automaticamente
+
+### Sicurezza Implementata
+
+- **Sanitizzazione HTML**: Utilizzo DOMPurify per prevenzione XSS
+- **Sandboxing**: Anteprima HTML in iframe isolato
+- **Validazione Input**: Controlli rigorosi sui dati JSON
+- **Isolamento Script**: Content script separato dal contesto pagina
+
+## Qualità del Codice
+
+### Architettura
+- **Separazione Responsabilità**: UI, logica business, content script
+- **Modularità**: Funzioni helper riutilizzabili
+- **Gestione Errori**: Logging condizionale e recovery graceful
+
+### Best Practices
+- **Commenti Dettagliati**: Specialmente negli algoritmi complessi
+- **Configurazione Flessibile**: Modalità debug/production
+- **Cross-browser Compatibility**: Supporto manifest v3
+- **Performance**: Algoritmi ottimizzati per DOM manipulation
+
+## License
+
+Questo progetto usa una licenza open-source. Consulta il file LICENSE nella root del repository per i dettagli.
+
+## Dettagli Tecnici
+
+### Funzionalità di Estrazione
+
+*   **Estrazione Form:** Identifica e estrae i form HTML presenti nella pagina attiva con algoritmi avanzati di riconoscimento.
+*   **Estrazione Form con AI:** Utilizza modelli AI (LLM) per analizzare il DOM completo della pagina e estrarre form intelligentemente con associazione automatica delle etichette.
+*   **Semplificazione HTML:** Rimuove elementi e attributi non essenziali per ottenere una struttura pulita e focalizzata sui campi compilabili.
+*   **Visualizzazione Flessibile:** Permette di passare tra una **Anteprima HTML** (rendering del codice estratto) e la visualizzazione del **Codice Sorgente** modificabile.
+*   **Modifica Codice Sorgente:** Nella vista codice sorgente, è possibile modificare l'HTML estratto. Le modifiche possono essere "applicate" per aggiornare la vista.
+*   **Copia HTML:** Copia negli appunti il codice HTML estratto e semplificato.
+*   **Salva HTML:** Salva l'HTML estratto come file `.html`, includendo stili CSS di base per una buona leggibilità.
+
+### Funzionalità di Compilazione
+
+*   **Caricamento Dati:** Carica i dati da usare per la compilazione del form da un file `.json`, in alternativa permette di incollarli direttamente in una textarea.
+*   **Assegnazione Valori:** Compila automaticamente il form della pagina web attiva utilizzando i dati caricati.
+*   **Messaggi di Stato:** Fornisce feedback visivo sull'esito delle operazioni.
+
+### Funzionalità AI avanzate
+
+*   **Configurazione AI:** Permette di selezionare un provider LLM (Google Gemini, OpenAI ChatGPT) e inserire la relativa chiave API.
+*   **Estrazione Form Intelligente:** Analizza il DOM completo della pagina utilizzando l'AI per identificare e estrarre form con associazione automatica delle etichette basata sul contesto semantico.
+*   **Mapping Semantico con AI:** Analizza l'HTML del form estratto e i dati JSON forniti dall'utente utilizzando l'LLM configurato per creare mapping semantici intelligenti.
+*   **Revisione del Mapping:** Il JSON generato dall'AI viene mostrato per controllo e modifica prima dell'applicazione.
+*   **Assegnazione Valori Mappati dall'AI:** Applica i valori utilizzando il JSON mappato dall'AI.
+
+### Metodologie di Estrazione Form
+
+#### 1. Estrazione Algoritmica (Pulsante "Estrai Forms")
+
+Utilizza algoritmi JavaScript deterministici per l'estrazione rapida e precisa:
+
+##### Algoritmo di Riconoscimento Form
+
+L'estensione utilizza un **sistema a doppio livello** per identificare e estrarre i form:
+
+###### **Form Standard (`<form>`)**
+- Rileva tutti gli elementi `<form>` presenti nella pagina
+- Estrae la struttura interna preservando la gerarchia semantica
+- Mantiene attributi essenziali: `id`, `name`, `action`, `method`
+
+###### **Form Logici (Pattern Recognition)**
+L'estensione identifica anche **contenitori logici** che funzionano come form senza utilizzare il tag `<form>`:
+
+**Criteri di Identificazione:**
+- Elementi con `role="form"` o `role="search"`
+- Contenitori con almeno 2 campi input O 1 campo input + 1 button
+- Fieldset con elementi interattivi
+- Sezioni con attributi `aria-label` o `aria-labelledby`
+
+**Filtri di Qualità:**
+- Esclude contenitori troppo generici (>500 caratteri di testo, >30 elementi figli)
+- Verifica la densità di elementi interattivi
+- Controlla la visibilità degli elementi
+
+##### Sistema di Associazione Etichette
+
+L'estensione utilizza un **algoritmo gerarchico a 5 livelli** per associare etichette ai campi:
+
+###### **Livello 1: Associazione Diretta (Priorità Massima)**
+```html
+<label for="campo1">Nome</label>
+<input id="campo1" type="text">
+```
+
+###### **Livello 2: ARIA Labelledby**
+```html
+<div id="etichetta">Email</div>
+<input aria-labelledby="etichetta" type="email">
+```
+
+###### **Livello 3: ARIA Label**
+```html
+<input aria-label="Telefono" type="tel">
+```
+
+###### **Livello 4: Componente Wrapper (Frameworks Moderni)**
+Per framework come Angular, React, Vue:
+```html
+<p-calendar aria-label="Data Nascita">
+  <input id="data" type="tel">
+</p-calendar>
+```
+
+**Pattern Riconosciuti:**
+- `<label>Testo</label><custom-component>...</custom-component>`
+- `<div>Etichetta:</div><wrapper><input></wrapper>`
+- Componenti con prefissi: `p-`, `app-`, `sdk-`, `mat-`, `ion-`, `ng-`, `v-`, `react-`
+
+###### **Livello 5: Label Wrappante (Ultima Risorsa)**
+```html
+<label>
+  Nome Completo
+  <input type="text">
+</label>
+```
+
+##### Estrazione Testo Etichette
+
+**Algoritmo di Pulizia del Testo:**
+1. **Rimozione Elementi Interattivi:** Elimina input, button, select annidati
+2. **Gestione Commenti:** Ignora commenti HTML/Angular (`<!---->`)
+3. **Estrazione Nodi Testo:** Naviga ricorsivamente i nodi DOM
+4. **Fallback al Title:** Usa l'attributo `title` se il testo non è disponibile
+5. **Normalizzazione:** Rimuove spazi eccessivi e caratteri di separazione finali
+
+#### 2. Estrazione AI-Powered (Pulsante "Estrai Forms con AI")
+
+Utilizza modelli linguistici avanzati per un'analisi semantica approfondita del DOM:
+
+##### Vantaggi dell'Estrazione AI
+
+**Comprensione Semantica Avanzata:**
+- Analizza il contesto completo della pagina per identificare form nascosti o non convenzionali
+- Riconosce pattern complessi di associazione etichetta-campo basati sul significato del contenuto
+- Gestisce strutture HTML dinamiche e framework moderni con maggiore precisione
+
+**Associazione Etichette Intelligente:**
+- Deduce etichette dal contesto anche quando mancano associazioni esplicite
+- Interpreta testi descrittivi, titoli di sezione e contenuti correlati
+- Risolve ambiguità di associazione utilizzando il significato semantico
+
+**Gestione Framework Avanzata:**
+- Riconosce componenti personalizzati di framework JavaScript moderni
+- Identifica form generati dinamicamente e single-page applications
+- Estrae form da shadow DOM e strutture component-based
+
+##### Processo di Estrazione AI
+
+1. **Analisi DOM Completa:** L'AI riceve l'intero documento HTML della pagina
+2. **Identificazione Form Intelligente:** Utilizza comprensione semantica per identificare tutti i form, anche quelli non convenzionali
+3. **Associazione Etichette Contestuale:** Associa etichette basandosi sul significato e sul contesto semantico
+4. **Generazione HTML Strutturato:** Produce HTML semplificato ottimizzato con etichette associate correttamente
+
+##### Modelli AI Supportati
+
+**Google Gemini:**
+- Gemini 1.5 Flash (Veloce, ottimizzato per task rapidi)  
+- Gemini 1.5 Pro (Potente, analisi approfondita)
+- Gemini 2.5 Pro/Flash (Versioni avanzate in preview)
+- Gemma 3 (Modelli open-source: 27B, 12B, 4B IT)
+
+**OpenAI ChatGPT:**
+- GPT-4o (Nuovo modello multimodale ottimizzato)
+- GPT-4 Turbo (Modello potente per task complessi)
+- GPT-3.5 Turbo (Bilanciato tra prestazioni e costi)
+
+##### Prompt Engineering Avanzato
+
+L'estensione utilizza prompt strutturati che includono:
+
+**Istruzioni Dettagliate di Estrazione:**
+- Regole precise per identificazione form standard e logici
+- Criteri di inclusione/esclusione elementi
+- Priorità gerarchiche per associazione etichette
+
+**Gestione Visibilità e Stato:**
+- Inclusione elementi nascosti con attributi significativi
+- Esclusione campi readonly e disabled
+- Preservazione semantica per tutti gli stati input
+
+**Formato Output Standardizzato:**
+- HTML semplificato con struttura coerente
+- Titoli descrittivi per ogni form identificato
+- Separatori visivi tra form diverse
+
+##### Quando Utilizzare l'Estrazione AI
+
+**Raccomandato per:**
+- ✅ Pagine con form complessi o non convenzionali
+- ✅ Single Page Applications (SPA) e framework moderni
+- ✅ Form generati dinamicamente via JavaScript
+- ✅ Strutture component-based (React, Angular, Vue)
+- ✅ Pagine con associazioni etichetta-campo ambigue
+- ✅ Form con layout personalizzati o CSS complesso
+
+**L'estrazione algoritmica è sufficiente per:**
+- ✅ Form HTML standard ben strutturati
+- ✅ Pagine con markup semantico corretto
+- ✅ Form con associazioni label[for] esplicite
+- ✅ Strutture semplici e convenzionali
+
+### Elementi Processati ed Esclusi
+
+#### **Elementi Inclusi:**
+- ✅ `<input>` (tutti i tipi eccetto submit, reset, image, button)
+- ✅ `<input type="hidden">` **SEMPRE INCLUSO** (ignorando visibilità CSS)
+- ✅ `<textarea>`
+- ✅ `<select>` e `<option>`
+- ✅ `<fieldset>` e `<legend>`
+- ✅ `<label>` (con testo estratto pulito)
+- ✅ Elementi con ruoli: `textbox`, `combobox`, `listbox`, `checkbox`, `radio`, `switch`, `slider`
+
+#### **Elementi Esclusi:**
+- ❌ `<button>` (tutti i tipi)
+- ❌ `<input type="button|submit|reset|image">`
+- ❌ **`<input readonly>` e `<textarea readonly>`** - SEMPRE ESCLUSI
+- ❌ Elementi `disabled`
+- ❌ Elementi con ruoli: `button`, `spinbutton`, `searchbox`
+- ❌ Script, stili, metadata (`<script>`, `<style>`, `<head>`, etc.)
+- ❌ Elementi di navigazione (`<nav>`, `<header>`, `<footer>`)
+
+### Preservazione Semantica
+
+**Attributi Essenziali Mantenuti:**
+- Identificatori: `id`, `name`
+- Tipi e valori: `type`, `value`, `placeholder`
+- Stato: `required`, `checked`, `selected`, `disabled` (NON readonly)
+- Associazioni: `for`, `aria-label`, `aria-labelledby`
+- Vincoli: `min`, `max`, `step`, `pattern`, `multiple`
+- Accessibilità: `title`, `role`
+
+**Struttura HTML Preservata:**
+- Gerarchia form > fieldset > legend
+- Associazioni label-input
+- Tabelle con colspan/rowspan
+- Liste e raggruppamenti semantici
+
+## Risorse Utili
+
+- [Documentazione Completa](https://example.com/docs)
+- [Esempi di Utilizzo](https://example.com/examples)
+- [FAQ - Domande Frequenti](https://example.com/faq)
+
+Per ulteriori informazioni, aggiornamenti e supporto, visita i nostri canali ufficiali.
